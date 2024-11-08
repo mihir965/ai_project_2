@@ -27,25 +27,34 @@ def update_kb_blocked(bot_kb, blocked, grid):
     return new_bot_kb
 
 
-def check_common_direction(bot_kb, grid):
+def check_common_direction(bot_kb, grid, last_move_direction):
     directions = {
         'north': 0,
         'south': 0,
         'east': 0,
         'west': 0
     }
-    cardinality = [(0,1), (0,-1), (1,0), (-1,0)]
+    direction_offset = {
+        'north':(-1,0),
+        'south':(1,0),
+        'east':(0,1),
+        'west':(0,-1)      
+    }
+    opposite_direction = {
+        'north': 'south',
+        'south': 'north',
+        'east': 'west',
+        'west': 'east'
+    }
     for i in bot_kb:
-        for ci, cj in cardinality:
-            test_i, test_j = i[0]+ci, i[1]+cj
-            if grid[test_i][test_j]==0 and (ci, cj)==(0,1):
-                directions['east']+=1
-            elif grid[test_i][test_j]==0 and (ci, cj)==(0,-1):
-                directions['west']+=1
-            elif grid[test_i][test_j]==0 and (ci, cj)==(1,0):
-                directions['south']+=1
-            elif grid[test_i][test_j]==0 and (ci, cj)==(-1,0):
-                directions['north']+=1
+        for dir_name, (ci, cj) in direction_offset.items():
+            test_i, test_j = i[0]+ci , i[1]+cj
+            if grid[test_i][test_j]==0:
+                directions[dir_name]+=1
+    if last_move_direction:
+        forbidden_dir = opposite_direction[last_move_direction]
+        if len([d for d in directions if directions[d]>0])>1:
+            directions[forbidden_dir] = -1 # so that it doen't come in max
     return max(directions, key=directions.get)
 
 def attempt_movement(dir_check, grid, bot_pos):
@@ -60,7 +69,7 @@ def attempt_movement(dir_check, grid, bot_pos):
     if grid[test_i][test_j] == 1:
         return False, bot_pos
     else:
-        grid[bot_pos[0]][bot_pos[1]] = 0 
+        grid[bot_pos[0]][bot_pos[1]] = 0
         bot_pos = (test_i, test_j)
         if grid[test_i][test_j] == 2:
             print("The bot caught the rat!")
@@ -90,38 +99,29 @@ def update_kb_movement(move_check, dir_check, bot_kb, grid):
         
 
 def main_function(grid, n, bot_pos):
+    print(f"Original bot position that simulation knows: {bot_pos}")
     open_list = list_open_cells(grid, n)
     t = 0
+    last_move_direction = None
     bot_kb = open_list
     print(len(bot_kb))
-    while t < 10:
+    while len(bot_kb) > 1:
         blocked = sensing_neighbours_blocked(grid, bot_pos) 
         bot_kb = update_kb_blocked(bot_kb, blocked, grid)
         print(len(bot_kb))
-        dir_check = check_common_direction(bot_kb, grid)
+        dir_check = check_common_direction(bot_kb, grid, last_move_direction)
         print(dir_check)
         # We will also move the bot if possible
         move_check, bot_pos = attempt_movement(dir_check, grid, bot_pos)
         print(move_check)
         bot_kb = update_kb_movement(move_check, dir_check, bot_kb, grid)
         print(len(bot_kb))
+        if move_check:
+            last_move_direction = dir_check
+        if len(bot_kb) == 0:
+            print("Error: No possible positions remain in the knowledge base.")
+            break
         t+=1
-
-    # while len(bot_kb) > 1:
-    #     blocked = sensing_neighbours_blocked(grid, bot_pos) 
-    #     bot_kb = update_kb_blocked(bot_kb, blocked, grid)
-    #     print(len(bot_kb))
-    #     dir_check = check_common_direction(bot_kb, grid)
-    #     print(dir_check)
-    #     # We will also move the bot if possible
-    #     move_check, bot_pos = attempt_movement(dir_check, grid, bot_pos)
-    #     print(move_check)
-    #     bot_kb = update_kb_movement(move_check, dir_check, bot_kb, grid)
-    #     print(len(bot_kb))
-    #     if len(bot_kb) == 0:
-    #         print("Error: No possible positions remain in the knowledge base.")
-    #         break
-    #     t+=1
-    # if len(bot_kb)==1:
-    #     print(f"Bot position is identified: {bot_kb[0]}")
-    # print(t)
+    if len(bot_kb)==1:
+        print(f"Bot position is identified: {bot_kb[0]}")
+    print(t)
