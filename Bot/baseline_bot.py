@@ -20,7 +20,6 @@ def sensing_neighbours_blocked(grid, bot_pos):
 
 def update_kb_blocked(bot_kb, blocked, grid):
     new_bot_kb = []
-    cardinality = [(0,1), (0,-1), (1,0), (-1,0), (1,1), (1,-1), (-1, 1), (-1,-1)]
     for i in bot_kb:
         blocked_cells = sensing_neighbours_blocked(grid, (i[0],i[1]))
         if blocked_cells==blocked:
@@ -50,89 +49,79 @@ def check_common_direction(bot_kb, grid):
     return max(directions, key=directions.get)
 
 def attempt_movement(dir_check, grid, bot_pos):
-    if dir_check == 'east':
-        move = (0,1)
-        test_i, test_j = bot_pos[0]+move[0], bot_pos[1]+move[1]
-        if grid[test_i][test_j]==1:
-            return False
-        elif grid[test_i][test_j]==0:
-            grid[bot_pos[0]][bot_pos[1]] = 0
-            grid[test_i][test_j] = 4
-            return True
-        elif grid[test_i][test_j]==2:
+    direction_offset = {
+        'north':(-1,0),
+        'south':(1,0),
+        'east':(0,1),
+        'west':(0,-1)      
+    }
+    move = direction_offset[dir_check]
+    test_i, test_j = bot_pos[0]+move[0], bot_pos[1]+move[1]
+    if grid[test_i][test_j] == 1:
+        return False, bot_pos
+    else:
+        grid[bot_pos[0]][bot_pos[1]] = 0 
+        bot_pos = (test_i, test_j)
+        if grid[test_i][test_j] == 2:
             print("The bot caught the rat!")
-            return True
-    if dir_check == 'west':
-        move = (0,-1)
-        test_i, test_j = bot_pos[0]+move[0], bot_pos[1]+move[1]
-        if grid[test_i][test_j]==1:
-            return False
-        elif grid[test_i][test_j]==0:
-            grid[bot_pos[0]][bot_pos[1]] = 0
-            grid[test_i][test_j] = 4
-            return True
-        elif grid[test_i][test_j]==2:
-            print("The bot caught the rat!")
-            return True
-    if dir_check == 'south':
-        move = (1,0)
-        test_i, test_j = bot_pos[0]+move[0], bot_pos[1]+move[1]
-        if grid[test_i][test_j]==1:
-            return False
-        elif grid[test_i][test_j]==0:
-            grid[bot_pos[0]][bot_pos[1]] = 0
-            grid[test_i][test_j] = 4
-            return True
-        elif grid[test_i][test_j]==2:
-            print("The bot caught the rat!")
-            return True
-    if dir_check == 'north':
-        move = (-1,0)
-        test_i, test_j = bot_pos[0]+move[0], bot_pos[1]+move[1]
-        if grid[test_i][test_j]==1:
-            return False
-        elif grid[test_i][test_j]==0:
-            grid[bot_pos[0]][bot_pos[1]] = 0
-            grid[test_i][test_j] = 4
-            return True
-        elif grid[test_i][test_j]==2:
-            print("The bot caught the rat!")
-            return True
+        grid[test_i][test_j] = 4
+        return True, bot_pos 
+
     
 def update_kb_movement(move_check, dir_check, bot_kb, grid):
     updated_kb_moves = []
-    if dir_check == 'east':
-        direction = (0, 1)
-    if dir_check == 'west':
-        direction = (0, -1)
-    if dir_check == 'north':
-        direction = (-1, 0)
-    if dir_check == 'south':
-        direction = (1, 0)
-    if move_check==True:
-        for i in bot_kb:
-            test_i, test_j = i[0]+direction[0], i[1]+direction[1]
-            if grid[test_i][test_j]==0:
-                updated_kb_moves.append(i)
-    elif move_check==False:
-        for i in bot_kb:
-            test_i, test_j = i[0]+direction[0], i[1]+direction[1]
-            if grid[test_i][test_j]==1:
+    direction_offset = {
+        'north':(-1,0),
+        'south':(1,0),
+        'east':(0,1),
+        'west':(0,-1)      
+    }
+    direction = direction_offset[dir_check]
+    for i in bot_kb:
+        test_i, test_j = i[0] + direction[0], i[1] + direction[1]
+        movement_possible = (grid[test_i][test_j] != 1)
+        if move_check:
+            if movement_possible:
+                updated_kb_moves.append((test_i, test_j))
+        else:
+            if not movement_possible:
                 updated_kb_moves.append(i)
     return updated_kb_moves
         
 
 def main_function(grid, n, bot_pos):
     open_list = list_open_cells(grid, n)
-    blocked = sensing_neighbours_blocked(grid, bot_pos)
-    # print(blocked)
-    print(len(open_list))
+    t = 0
     bot_kb = open_list
-    bot_kb = update_kb_blocked(bot_kb, blocked, grid)
     print(len(bot_kb))
-    dir_check = check_common_direction(bot_kb, grid)
-    print(dir_check)
-    move_check = attempt_movement(dir_check, grid, bot_pos)
-    print(move_check)
-    bot_kb = update_kb_movement(move_check, dir_check, bot_kb, grid)
-    print(len(bot_kb))
+    while t < 10:
+        blocked = sensing_neighbours_blocked(grid, bot_pos) 
+        bot_kb = update_kb_blocked(bot_kb, blocked, grid)
+        print(len(bot_kb))
+        dir_check = check_common_direction(bot_kb, grid)
+        print(dir_check)
+        # We will also move the bot if possible
+        move_check, bot_pos = attempt_movement(dir_check, grid, bot_pos)
+        print(move_check)
+        bot_kb = update_kb_movement(move_check, dir_check, bot_kb, grid)
+        print(len(bot_kb))
+        t+=1
+
+    # while len(bot_kb) > 1:
+    #     blocked = sensing_neighbours_blocked(grid, bot_pos) 
+    #     bot_kb = update_kb_blocked(bot_kb, blocked, grid)
+    #     print(len(bot_kb))
+    #     dir_check = check_common_direction(bot_kb, grid)
+    #     print(dir_check)
+    #     # We will also move the bot if possible
+    #     move_check, bot_pos = attempt_movement(dir_check, grid, bot_pos)
+    #     print(move_check)
+    #     bot_kb = update_kb_movement(move_check, dir_check, bot_kb, grid)
+    #     print(len(bot_kb))
+    #     if len(bot_kb) == 0:
+    #         print("Error: No possible positions remain in the knowledge base.")
+    #         break
+    #     t+=1
+    # if len(bot_kb)==1:
+    #     print(f"Bot position is identified: {bot_kb[0]}")
+    # print(t)
