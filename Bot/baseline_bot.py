@@ -114,6 +114,7 @@ def main_function(grid, n, bot_pos):
         # We will also move the bot if possible
         move_check, bot_pos = attempt_movement(dir_check, grid, bot_pos)
         print(move_check)
+        print(f"New pos: {bot_pos}")
         bot_kb = update_kb_movement(move_check, dir_check, bot_kb, grid)
         print(len(bot_kb))
         if move_check:
