@@ -1,1 +1,1 @@
-from .baseline_bot import *
+from .localization import *
