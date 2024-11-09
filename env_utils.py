@@ -18,7 +18,7 @@ class Cell:
 
 # checking if cell is blocked
 def is_blocked(grid, row, col):
-    return grid[row][col] == 1
+    return grid[row][col] == -1
 
 # checking if cell is within the defined boundary
 def is_valid(row, col, n):
@@ -46,7 +46,7 @@ def blocked_cells(grid, n):
     blocked_cells = []
     for i in range(1, n-1):
         for j in range(1, n-1):
-            if grid[i][j] == 1:
+            if grid[i][j] == -1:
                 open_neighbours = count_open_neighbours(grid, i, j)
                 if open_neighbours == 1:
                     blocked_cells.append((i, j))
@@ -61,7 +61,7 @@ def dead_end_cells(grid, n):
     return dead_ends
 
 def grid_init(n):
-    grid = [[1 for _ in range(n)] for _ in range(n)]
+    grid = [[-1 for _ in range(n)] for _ in range(n)]
     init_x, init_y = random.randint(1, n-2), random.randint(1, n-2)
     grid[init_x][init_y] = 0
     while True:
@@ -89,7 +89,7 @@ def grid_init(n):
 def place_element(grid, n, value):
     while True:
         x, y = random.randint(1, n-2), random.randint(1, n-2)
-        if (grid[x][y] != 1 and
+        if (grid[x][y] != -1 and
             grid[x+1][y] != 2 and grid[x-1][y] != 2 and
             grid[x][y+1] != 2 and grid[x][y-1] != 2):
             grid[x][y] = value
