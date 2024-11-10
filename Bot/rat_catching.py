@@ -28,8 +28,16 @@ def prob_ping(bot_pos, j, alpha):
     else:
         return False
     
-# def update_cells(grid, list_possible_cells):
-#     for i in list_possible_cells:
+# def update_cells(prob_grid):
+#     for i in prob_grid:
+
+# def get_probable_cells(prob_grid, n):
+#     kb = []
+#     for i in range(n):
+#         for j in range(n):
+#             if prob_grid[i][j] != -1:
+#                 kb.append(prob_grid[i][j])
+#     return kb
 
 
 def init_prob_cells(grid, n, list_poss_cells):
@@ -51,4 +59,6 @@ def main_function_catching(grid, n, bot_pos, rat_pos, alpha):
     prob_grid = init_prob_cells(grid, n, list_poss_cells)
     print(prob_grid)
     print(prob_grid[2][4])
-    #Until the bot doesn't hear a ping from any cell, the bot will move towards the center of the grid.
+    # kb = get_probable_cells(prob_grid, n)
+
+

@@ -15,7 +15,7 @@ def sensing_neighbours_blocked(grid, bot_pos, n):
     for ci, cj in cardinality:
         test_i, test_j = bot_pos[0]+ci, bot_pos[1]+cj
         if 0 <= test_i < n and 0 <= test_j < n:
-            if grid[test_i][test_j]==1:
+            if grid[test_i][test_j]==-1:
                 blocked_cells+=1
         else:
             blocked_cells+=1
