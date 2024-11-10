@@ -26,6 +26,6 @@ frames_bot1 = []
 print("Bot 1")
 random.seed(seed_value)
 np.random.seed(seed_value)
-print(grid)
+# print(grid)
 # main_function(grid, n, bot_pos)
 bot_pos = main_function_catching(grid, n, bot_pos, rat_pos, alpha)

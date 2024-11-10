@@ -20,6 +20,9 @@ class Cell:
 def is_blocked(grid, row, col):
     return grid[row][col] == -1
 
+def is_unblocked(grid, row, col):
+    return grid[row][col] != -1
+
 # checking if cell is within the defined boundary
 def is_valid(row, col, n):
     return (row >= 0) and (row < n) and (col >= 0) and (col < n)
@@ -103,23 +106,23 @@ def rat_init(grid, n, v):
     x, y = place_element(grid, n, v)
     return x, y
 
-# def visualize_simulation(frames, interval=100):
-#     cmap = ListedColormap(['white', 'black', 'red', 'blue', 'green'])
-#     fig, ax = plt.subplots()
-#     ax.set_title('Grid Simulation')
-#     mat = ax.matshow(frames[0], cmap=cmap, vmin=0, vmax=4)
-#     def update(frame):
-#         mat.set_data(frame)
-#         return [mat]
-#     ani = matplotlib.animation.FuncAnimation(fig, update, frames=frames, interval=interval)
-#     plt.show()
+def visualize_simulation_1(frames, interval=100):
+    cmap = ListedColormap(['white', 'black', 'red', 'blue', 'green'])
+    fig, ax = plt.subplots()
+    ax.set_title('Grid Simulation')
+    mat = ax.matshow(frames[0], cmap=cmap, vmin=0, vmax=4)
+    def update(frame):
+        mat.set_data(frame)
+        return [mat]
+    ani = matplotlib.animation.FuncAnimation(fig, update, frames=frames, interval=interval)
+    plt.show()
 
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.animation
 from matplotlib.colors import ListedColormap, Normalize
 
-def visualize_simulation(frames, interval=100):
+def visualize_simulation_2(frames, interval=100):
     # Create a figure and axis
     fig, ax = plt.subplots()
     ax.set_title('Grid Simulation')
