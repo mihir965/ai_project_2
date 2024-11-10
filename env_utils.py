@@ -103,16 +103,60 @@ def rat_init(grid, n, v):
     x, y = place_element(grid, n, v)
     return x, y
 
+# def visualize_simulation(frames, interval=100):
+#     cmap = ListedColormap(['white', 'black', 'red', 'blue', 'green'])
+#     fig, ax = plt.subplots()
+#     ax.set_title('Grid Simulation')
+#     mat = ax.matshow(frames[0], cmap=cmap, vmin=0, vmax=4)
+#     def update(frame):
+#         mat.set_data(frame)
+#         return [mat]
+#     ani = matplotlib.animation.FuncAnimation(fig, update, frames=frames, interval=interval)
+#     plt.show()
+
+import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib.animation
+from matplotlib.colors import ListedColormap, Normalize
+
 def visualize_simulation(frames, interval=100):
-    cmap = ListedColormap(['white', 'black', 'red', 'blue', 'green'])
+    # Create a figure and axis
     fig, ax = plt.subplots()
     ax.set_title('Grid Simulation')
-    mat = ax.matshow(frames[0], cmap=cmap, vmin=0, vmax=4)
+
+    # Prepare the first frame
+    first_frame = frames[0]
+
+    # Mask the blocked cells (-1)
+    masked_frame = np.ma.masked_where(first_frame == -1, first_frame)
+
+    # Set the colormap for probabilities
+    cmap = plt.cm.viridis  # You can choose any continuous colormap you prefer
+    cmap.set_bad(color='black')  # Set the color for masked (blocked) cells
+
+    # Normalize the probabilities between 0 and 1
+    norm = Normalize(vmin=0.0, vmax=0.005)
+
+    # Plot the initial frame
+    mat = ax.imshow(masked_frame, cmap=cmap, norm=norm)
+
+    # Optionally, add a colorbar to show the probability scale
+    fig.colorbar(mat, ax=ax, label='Probability')
+
+    # Function to update each frame
     def update(frame):
-        mat.set_data(frame)
+        # Mask the blocked cells in the current frame
+        masked_frame = np.ma.masked_where(frame == -1, frame)
+        mat.set_data(masked_frame)
         return [mat]
-    ani = matplotlib.animation.FuncAnimation(fig, update, frames=frames, interval=interval)
+
+    # Create the animation
+    ani = matplotlib.animation.FuncAnimation(
+        fig, update, frames=frames, interval=interval, blit=True
+    )
+
     plt.show()
+
 
 # saves all the results for each simulation
 def log_results(log_data, filename='/Users/drcrocs22/Developer/Rutgers Projects/Intro To AI/PROJECT_1_FINAL/simulation_results.csv'):
