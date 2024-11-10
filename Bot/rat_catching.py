@@ -19,7 +19,8 @@ def manhattan_dist(bot_pos, j):
 
 #P(ping|d(i,j)) = e^{-a(d(i,j)-1)}
 def prob_ping_rat(bot_pos, rat_pos, alpha):
-    dist = manhattan_dist(bot_pos, rat_pos)
+    # dist = manhattan_dist(bot_pos, rat_pos)
+    dist = max(1, manhattan_dist(bot_pos, rat_pos))
     exponent = -1*(alpha*(dist-1))
     prob = math.exp(exponent)
     rand_chance = random.uniform(0.0, 1.0)
@@ -31,7 +32,8 @@ def prob_ping_rat(bot_pos, rat_pos, alpha):
         return False
     
 def prob_ping_j(bot_pos, j, alpha):
-    dist = manhattan_dist(bot_pos, j)
+    # dist = manhattan_dist(bot_pos, j)
+    dist = max(1, manhattan_dist(bot_pos, j))
     exponent = -1*(alpha*(dist-1))
     prob = math.exp(exponent)
     return prob
@@ -70,6 +72,7 @@ def main_function_catching(grid, n, bot_pos, rat_pos, alpha):
     frames_heatmap = []
     frames_grid = []
     grid_for_map = grid
+    frames_grid.append(np.copy(grid_for_map))
     grid_for_prob = np.array(grid, dtype=float)
     # init_kb_og = list_possible_cells(grid, n)
     init_kb = list_possible_cells(grid_for_prob, n)
@@ -83,7 +86,7 @@ def main_function_catching(grid, n, bot_pos, rat_pos, alpha):
             #Use Rat detector to hear ping
             hear_prob_from_rat = prob_ping_rat(bot_pos, rat_pos, alpha)
 
-            #Update the probabilites based on whether or not the ping was heard
+            #Update the probabilites based on whether or not the ping was heard - Bayes Theorem
             prob_grid = update_cells(prob_grid, init_kb, hear_prob_from_rat, bot_pos, alpha)
 
             #Get the cell with max probability
@@ -94,50 +97,23 @@ def main_function_catching(grid, n, bot_pos, rat_pos, alpha):
             if max_prob==1:
                 print(f"the rat was found at cell:{max_cells[0]}")
 
-        if not switch:
-            print(max_cells)
-            path = plan_path_bot2(grid, bot_pos, max_cells[0], n)
-            grid[bot_pos[0]][bot_pos[1]] = 0
-            if len(path)==1:
-                print("Broke by error")
+        else:
+            if not max_cells:
+                print("No cell with maximum probability found.")
                 break
-            bot_pos = path.pop(1)
-            grid[bot_pos[0]][bot_pos[1]] = 1
-            frames_grid.append(np.copy(grid))
+            path = plan_path_bot2(grid_for_map, bot_pos, max_cells[0], n)
+            if path is None or len(path) <= 1:
+                print("No path found or already at destination.")
+                break
+            grid_for_map[bot_pos[0]][bot_pos[1]] = 0
+            bot_pos = path[1]
+            grid_for_map[bot_pos[0]][bot_pos[1]] = 1
+        frames_grid.append(np.copy(grid_for_map))
         t+=1
         switch = not switch
 
         if bot_pos==rat_pos:
-            print("Correct break")
+            print("Bot has caught the rat")
             break
+    print(t)
     visualize_simulation_1(frames_grid)
-       
-    
-
-
-
-
-
-
-
-
-    # while True:
-    #     print(f"Bot pos: {bot_pos}")
-    #     print(f"Rat_pos: {rat_pos}")
-    #     grid_2 = np.array(grid, dtype=float)
-    #     list_poss_cells = list_possible_cells(grid_2, n)
-    #     print(list_poss_cells)
-    #     hear_prob=prob_ping_rat(bot_pos, rat_pos, alpha)
-    #     print(hear_prob)
-    #     #initialize the probabilities
-    #     prob_grid = init_prob_cells(grid_2, n, list_poss_cells)
-    #     kb = list_poss_cells
-    #     prob_grid = update_cells(prob_grid, kb, hear_prob, bot_pos, alpha)
-    #     max_prob = np.max(prob_grid)
-    #     print(max_prob)
-    #     result = np.where(prob_grid==max_prob)
-    #     max_cells = list(zip(result[0], result[1]))
-    #     max_cells = [(int(row), int(col)) for row, col in max_cells]
-    #     print(max_cells[0])
-    #     break
-    # visualize_simulation_1(frames1)

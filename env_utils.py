@@ -107,10 +107,10 @@ def rat_init(grid, n, v):
     return x, y
 
 def visualize_simulation_1(frames, interval=100):
-    cmap = ListedColormap(['white', 'black', 'red', 'blue', 'green'])
+    cmap = ListedColormap(['black', 'white', 'red', 'blue', 'green'])
     fig, ax = plt.subplots()
     ax.set_title('Grid Simulation')
-    mat = ax.matshow(frames[0], cmap=cmap, vmin=0, vmax=4)
+    mat = ax.matshow(frames[0], cmap=cmap, vmin=-1, vmax=4)
     def update(frame):
         mat.set_data(frame)
         return [mat]
