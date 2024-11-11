@@ -113,7 +113,6 @@ def main_function_catching_moving_rat(grid, n, bot_pos, rat_pos, alpha):
     prob_grid = init_prob_cells(grid_for_prob, n, init_kb)
     switch = True
     t = 0
-    
     while True:
         if switch:
             # Use Rat detector to hear ping
@@ -148,7 +147,6 @@ def main_function_catching_moving_rat(grid, n, bot_pos, rat_pos, alpha):
                     print("No reachable cells with maximum probability.")
                     break
                 continue
-            # Move bot towards highest probability cell
             path = plan_path_bot2(grid, bot_pos, max_cells[0], n)
             if path is None or len(path) <= 1:
                 print("No path found to the target cell.")
@@ -157,9 +155,9 @@ def main_function_catching_moving_rat(grid, n, bot_pos, rat_pos, alpha):
             grid[bot_pos[0]][bot_pos[1]] = 0
             bot_pos = path[1]  # Take first step of path
             grid[bot_pos[0]][bot_pos[1]] = 3   
-            # Move rat after bot's move
-            rat_pos = simulate_rat_movement(grid, rat_pos)
 
+        # Move rat after bot's move
+        rat_pos = simulate_rat_movement(grid, rat_pos)
         # Store grid frame
         frames_grid.append(np.copy(grid))        
         t += 1
@@ -170,10 +168,10 @@ def main_function_catching_moving_rat(grid, n, bot_pos, rat_pos, alpha):
             print("Bot has caught the rat")
             break
         
-        # if t > 1000:
-        #     print("Maximum steps reached")
-        #     break
+        if t > 5000:
+            print("Maximum steps reached")
+            break
     
+    print(f"The bot took : {t} steps")
     # Visualize both grid movement and probability heatmap
     visualize_simulation_1(frames_grid)
-    print(t)
