@@ -164,6 +164,6 @@ def main_function_catching_moving_rat(grid, n, bot_pos, rat_pos, alpha):
     
     # Visualize both grid movement and probability heatmap
     visualize_simulation_1(frames_grid)
-    visualize_simulation_2(frames_heatmap)
+    # visualize_simulation_2(frames_heatmap)
     
-    return t, len(frames_grid), len(frames_heatmap)
+    return t, len(frames_grid)
