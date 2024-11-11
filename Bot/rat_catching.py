@@ -1,5 +1,5 @@
 from env_utils import *
-from Bot.bot_movement import *
+from bot_movement import *
 import math
 import random
 import numpy as np

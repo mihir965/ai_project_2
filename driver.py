@@ -1,5 +1,6 @@
 # from environment_utils import *
 from env_utils import *
+from bot_movement import *
 import sys
 import os
 import numpy as np
