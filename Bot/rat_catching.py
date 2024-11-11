@@ -84,6 +84,7 @@ def main_function_catching(grid, n, bot_pos, rat_pos, alpha):
     init_kb = list_possible_cells(grid_for_map, n)
     prob_grid = init_prob_cells(grid_for_prob, n, init_kb)
     switch = True
+    failure = False
     t = 0
     while True:
         if switch:
@@ -125,9 +126,12 @@ def main_function_catching(grid, n, bot_pos, rat_pos, alpha):
         t += 1
         switch = not switch
 
+        if t > 1000:
+            print(f"The bot is stuck or taking too long:")
+            return False
+
         if bot_pos == rat_pos:
             print(f"Probability at rat's position ({rat_pos}): {prob_grid[rat_pos[0]][rat_pos[1]]}")
             print("Bot has caught the rat")
-            break
-    print(f"Total steps taken: {t}")
-    visualize_simulation_1(frames_grid)
+            print(f"Total steps taken: {t}")
+            return True, frames_grid

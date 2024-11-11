@@ -168,12 +168,9 @@ def main_function_catching_moving_rat(grid, n, bot_pos, rat_pos, alpha):
         if bot_pos == rat_pos:
             print(f"Probability at rat's position ({rat_pos}): {prob_grid[rat_pos[0]][rat_pos[1]]}")
             print("Bot has caught the rat")
-            break
+            print(f"Total steps taken: {t}")
+            return True, frames_grid
         
-        # if t > 1000:
-        #     print("Maximum steps reached")
-        #     break
-    
-    # Visualize both grid movement and probability heatmap
-    visualize_simulation_1(frames_grid)
-    print(t)
+        if t > 1000:
+            print(f"The bot is stuck or taking too long:")
+            return False
