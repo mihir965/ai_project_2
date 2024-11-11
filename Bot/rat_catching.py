@@ -9,8 +9,8 @@ def list_possible_cells(grid, n):
     possible_cells = []
     for i in range(n):
         for j in range(n):
-            #0 = open 2 = Rat 4 = Bot
-            if grid[i][j] == 0 or grid[i][j]==2 or grid[i][j]==4:
+            #0 = open 2 = Rat 3 = Bot
+            if grid[i][j] == 0 or grid[i][j]==2:
                 possible_cells.append((i, j))
     return possible_cells
 
@@ -56,6 +56,13 @@ def update_cells(prob_grid, kb, hear_prob, bot_pos, alpha):
         if total_prob_sensor!=0:
             for cell in kb:
                 new_prob_grid[cell[0]][cell[1]] = ((1-prob_ping_j(bot_pos, cell, alpha))*new_prob_grid[cell[0]][cell[1]])/total_prob_sensor
+    # Normalize the probability grid
+    total_prob = np.sum(new_prob_grid)
+    if total_prob > 0:
+        new_prob_grid = new_prob_grid / total_prob
+    else:
+        print("Total probability is zero after update.")
+
     return new_prob_grid
 
 def init_prob_cells(grid, n, list_poss_cells):
@@ -71,49 +78,56 @@ def init_prob_cells(grid, n, list_poss_cells):
 def main_function_catching(grid, n, bot_pos, rat_pos, alpha):
     frames_heatmap = []
     frames_grid = []
-    grid_for_map = grid
+    grid_for_map = np.copy(grid)
     frames_grid.append(np.copy(grid_for_map))
-    grid_for_prob = np.array(grid, dtype=float)
-    # init_kb_og = list_possible_cells(grid, n)
-    init_kb = list_possible_cells(grid_for_prob, n)
-    # print(f"Original grid poss:\n{init_kb_og}\nNP Grid poss:\n{init_kb_new}\nLengths: {len(init_kb_og)}\n{len(init_kb_new)}")
-    #Redistribute intial probabilites
+    grid_for_prob = np.zeros_like(grid, dtype=float)
+    init_kb = list_possible_cells(grid_for_map, n)
     prob_grid = init_prob_cells(grid_for_prob, n, init_kb)
     switch = True
     t = 0
     while True:
         if switch:
-            #Use Rat detector to hear ping
+            # Use Rat detector to hear ping
             hear_prob_from_rat = prob_ping_rat(bot_pos, rat_pos, alpha)
-
-            #Update the probabilites based on whether or not the ping was heard - Bayes Theorem
+            # Update the probabilities based on the sensor reading
             prob_grid = update_cells(prob_grid, init_kb, hear_prob_from_rat, bot_pos, alpha)
-
-            #Get the cell with max probability
+            # Get the cell with max probability
             max_prob = np.max(prob_grid)
-            result = np.where(prob_grid==max_prob)
+            result = np.where(prob_grid == max_prob)
             max_cells = list(zip(result[0], result[1]))
             max_cells = [(int(row), int(col)) for row, col in max_cells]
-            if max_prob==1:
-                print(f"the rat was found at cell:{max_cells[0]}")
-
+            if max_prob == 1:
+                print(f"The rat was found at cell: {max_cells[0]}")
         else:
             if not max_cells:
-                print("No cell with maximum probability found.")
                 break
-            path = plan_path_bot2(grid_for_map, bot_pos, max_cells[0], n)
+            target_cell = max_cells[0]
+            if bot_pos == target_cell:
+                print("Bot is already at the target cell.")
+                switch = True
+                continue
+            if grid_for_map[target_cell[0]][target_cell[1]] == -1:
+                print(f"Target cell {target_cell} is blocked.")
+                max_cells.remove(target_cell)
+                if not max_cells:
+                    print("No reachable cells with maximum probability.")
+                    break
+                continue
+            path = plan_path_bot2(grid_for_map, bot_pos, target_cell, n)
             if path is None or len(path) <= 1:
-                print("No path found or already at destination.")
+                print("No path found to the target cell.")
                 break
-            grid_for_map[bot_pos[0]][bot_pos[1]] = 0
+            # Update bot position
+            grid_for_map[bot_pos[0]][bot_pos[1]] = 0 
             bot_pos = path[1]
-            grid_for_map[bot_pos[0]][bot_pos[1]] = 1
+            grid_for_map[bot_pos[0]][bot_pos[1]] = 3 
         frames_grid.append(np.copy(grid_for_map))
-        t+=1
+        t += 1
         switch = not switch
 
-        if bot_pos==rat_pos:
+        if bot_pos == rat_pos:
+            print(f"Probability at rat's position ({rat_pos}): {prob_grid[rat_pos[0]][rat_pos[1]]}")
             print("Bot has caught the rat")
             break
-    print(t)
+    print(f"Total steps taken: {t}")
     visualize_simulation_1(frames_grid)

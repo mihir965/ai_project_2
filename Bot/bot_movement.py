@@ -51,6 +51,7 @@ def bot_planning_bot2(closed_list, cell_details, open_list, src, dest, grid, fou
         i, j = p
         closed_list[i][j] = True
         if is_destination(i, j, dest):
+            print("Destination found")
             found_dest = True
             break
         for x, y in [(-1, 0), (1, 0), (0, -1), (0, 1)]:

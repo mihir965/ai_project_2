@@ -5,7 +5,7 @@ def list_open_cells(grid, n):
     open_list = []
     for i in range(n):
         for j in range(n):
-            if grid[i][j] == 0 or grid[i][j]==4:
+            if grid[i][j] == 0 or grid[i][j]==3:
                 open_list.append((i,j))
     return open_list
 
@@ -78,7 +78,7 @@ def attempt_movement(dir_check, grid, bot_pos, n):
         bot_pos = (test_i, test_j)
         if grid[test_i][test_j] == 2:
             print("The bot caught the rat!")
-        grid[test_i][test_j] = 4
+        grid[test_i][test_j] = 3
         return True, bot_pos 
     
 def update_kb_movement(move_check, dir_check, bot_kb, grid, n):

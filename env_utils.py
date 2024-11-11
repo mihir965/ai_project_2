@@ -1,6 +1,6 @@
 import random
 import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
+from matplotlib.colors import ListedColormap, BoundaryNorm
 import numpy as np
 import heapq
 import matplotlib.animation
@@ -90,11 +90,13 @@ def grid_init(n):
     return grid_matplot
 
 def place_element(grid, n, value):
+    if value == 2:
+        cannot = 3
+    elif value == 3:
+        cannot = 2
     while True:
         x, y = random.randint(1, n-2), random.randint(1, n-2)
-        if (grid[x][y] != -1 and
-            grid[x+1][y] != 2 and grid[x-1][y] != 2 and
-            grid[x][y+1] != 2 and grid[x][y-1] != 2):
+        if (grid[x][y] != -1 and grid[x][y] != cannot):
             grid[x][y] = value
             return x, y
     
@@ -107,10 +109,12 @@ def rat_init(grid, n, v):
     return x, y
 
 def visualize_simulation_1(frames, interval=100):
-    cmap = ListedColormap(['black', 'white', 'red', 'blue', 'green'])
+    cmap = ListedColormap(['black', 'white', 'red', 'blue'])
+    boundaries = [-1.5, -0.5, 1.5, 2.5, 3.5]
+    norm = BoundaryNorm(boundaries, cmap.N, clip=True)
     fig, ax = plt.subplots()
     ax.set_title('Grid Simulation')
-    mat = ax.matshow(frames[0], cmap=cmap, vmin=-1, vmax=4)
+    mat = ax.matshow(frames[0], cmap=cmap, norm=norm)
     def update(frame):
         mat.set_data(frame)
         return [mat]

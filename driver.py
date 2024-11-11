@@ -17,7 +17,7 @@ random.seed(seed_value)
 np.random.seed(seed_value)
 
 grid = grid_init(n)
-bot_pos = bot_init(grid, n, 4)
+bot_pos = bot_init(grid, n, 3)
 rat_pos = rat_init(grid, n, 2)
 
 frames_bot1 = []
