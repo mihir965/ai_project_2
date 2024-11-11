@@ -9,7 +9,7 @@ def list_possible_cells(grid, n):
     for i in range(n):
         for j in range(n):
             #0 = open 2 = Rat 4 = Bot
-            if grid[i][j] == 0 or grid[i][j] == 2 or grid[i][j] == 4:
+            if grid[i][j] == 0 or grid[i][j] == 2:
                 possible_cells.append((i, j))
     return possible_cells
 
@@ -76,12 +76,10 @@ def update_cells_moving_rat(prob_grid, kb, hear_prob, bot_pos, alpha, grid):
     if total_prob_sensor != 0:
         if hear_prob:
             for cell in kb:
-                new_prob_grid[cell[0]][cell[1]] = (prob_ping_j(bot_pos, cell, alpha) * 
-                                                  new_prob_grid[cell[0]][cell[1]]) / total_prob_sensor
+                new_prob_grid[cell[0]][cell[1]] = (prob_ping_j(bot_pos, cell, alpha) * new_prob_grid[cell[0]][cell[1]]) / total_prob_sensor
         else:
             for cell in kb:
-                new_prob_grid[cell[0]][cell[1]] = ((1-prob_ping_j(bot_pos, cell, alpha)) * 
-                                                  new_prob_grid[cell[0]][cell[1]]) / total_prob_sensor
+                new_prob_grid[cell[0]][cell[1]] = ((1-prob_ping_j(bot_pos, cell, alpha)) * new_prob_grid[cell[0]][cell[1]]) / total_prob_sensor
     
     # Then update based on possible rat movement
     new_prob_grid = update_prob_after_movement(new_prob_grid, grid)
@@ -106,10 +104,12 @@ def simulate_rat_movement(grid, rat_pos):
     return new_pos
 
 def main_function_catching_moving_rat(grid, n, bot_pos, rat_pos, alpha):
-    frames_grid = []
     frames_heatmap = []
-    grid_for_prob = np.array(grid, dtype=float)
-    init_kb = list_possible_cells(grid_for_prob, n)
+    frames_grid = []
+    grid_for_map = np.copy(grid)
+    frames_grid.append(np.copy(grid_for_map))
+    grid_for_prob = np.zeros_like(grid, dtype=float)
+    init_kb = list_possible_cells(grid_for_map, n)
     prob_grid = init_prob_cells(grid_for_prob, n, init_kb)
     switch = True
     t = 0
@@ -120,8 +120,7 @@ def main_function_catching_moving_rat(grid, n, bot_pos, rat_pos, alpha):
             hear_prob_from_rat = prob_ping_rat(bot_pos, rat_pos, alpha)
             
             # Update probabilities considering both sensor reading and rat movement
-            prob_grid = update_cells_moving_rat(prob_grid, init_kb, hear_prob_from_rat, 
-                                              bot_pos, alpha, grid)
+            prob_grid = update_cells_moving_rat(prob_grid, init_kb, hear_prob_from_rat, bot_pos, alpha, grid)
             
             # Store probability heatmap frame
             frames_heatmap.append(np.copy(prob_grid))
@@ -132,38 +131,52 @@ def main_function_catching_moving_rat(grid, n, bot_pos, rat_pos, alpha):
             max_cells = list(zip(result[0], result[1]))
             max_cells = [(int(row), int(col)) for row, col in max_cells]
             
-            if bot_pos == rat_pos:
-                print(f"The rat was caught at cell: {bot_pos}")
+            if max_prob == 1:
+                print(f"The rat was found at cell: {max_cells[0]}")
+        else:
+            if not max_cells:
                 break
-        
-        if not switch:
+            target_cell = max_cells[0]
+            if bot_pos==target_cell:
+                print("Bot is already at the target cell.")
+                switch = True
+                continue
+            if grid_for_map[target_cell[0]][target_cell[1]] == -1:
+                print(f"Target cell {target_cell} is blocked.")
+                max_cells.remove(target_cell)
+                if not max_cells:
+                    print("No reachable cells with maximum probability.")
+                    break
+                continue
             # Move bot towards highest probability cell
             path = plan_path_bot2(grid, bot_pos, max_cells[0], n)
             if path is None or len(path) <= 1:
-                print("No valid path found")
-                break
-                
+                print("No path found to the target cell.")
+                break  
             # Update bot position
             grid[bot_pos[0]][bot_pos[1]] = 0
             bot_pos = path[1]  # Take first step of path
-            grid[bot_pos[0]][bot_pos[1]] = 4
-            
-            # Store grid frame
-            frames_grid.append(np.copy(grid))
-            
+            grid[bot_pos[0]][bot_pos[1]] = 3   
             # Move rat after bot's move
             rat_pos = simulate_rat_movement(grid, rat_pos)
-        
+
+        # Store grid frame
+        frames_grid.append(np.copy(grid))        
         t += 1
         switch = not switch
-        
-        # Optional: Add maximum steps limit
-        if t > 1000:  # Adjust as needed
-            print("Maximum steps reached")
+
+        if bot_pos == rat_pos:
+            print(f"Probability at rat's position ({rat_pos}): {prob_grid[rat_pos[0]][rat_pos[1]]}")
+            print("Bot has caught the rat")
             break
+        
+        # if t > 1000:
+        #     print("Maximum steps reached")
+        #     break
     
     # Visualize both grid movement and probability heatmap
     visualize_simulation_1(frames_grid)
     # visualize_simulation_2(frames_heatmap)
+    # visualize_simulation_2(frames_heatmap)
     
-    return t, len(frames_grid)
+    # return t, len(frames_grid), len(frames_heatmap)
