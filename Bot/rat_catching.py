@@ -126,7 +126,7 @@ def main_function_catching(grid, n, bot_pos, rat_pos, alpha):
         t += 1
         switch = not switch
 
-        if t > 1000:
+        if t > 10000:
             print(f"The bot is stuck or taking too long:")
             return False
 

@@ -171,6 +171,6 @@ def main_function_catching_moving_rat(grid, n, bot_pos, rat_pos, alpha):
             print(f"Total steps taken: {t}")
             return True, frames_grid
         
-        if t > 1000:
+        if t > 5000:
             print(f"The bot is stuck or taking too long:")
             return False
