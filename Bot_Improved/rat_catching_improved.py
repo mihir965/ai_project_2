@@ -134,15 +134,16 @@ def weighted_center(target_quadrant, prob_grid_dict, prob_grid):
     sum_y = 0.0
     sum_p = 0.0
 
-    print(f"Before anything see the probability grid of the target quadrant:\n{print(prob_grid_dict)}")
+    print(f"Before anything see the probability grid of the target quadrant:\n{print(target_quadrant)}")
 
     for cell in prob_grid_dict[target_quadrant]:
+        print(cell)
         i, j = cell
         p = prob_grid[i][j]
         sum_x += p * i
         sum_y += p * j
         sum_p += p
-        # print(sum_x, sum_y, sum_p)
+        print(sum_x, sum_y, sum_p)
 
     if sum_p > 0:
         x_c = sum_x/sum_p
@@ -224,44 +225,48 @@ def main_improved(grid, n, bot_pos, rat_pos, alpha):
     quadrants = partition_grid(grid_for_map, n)
     t=0
     current_quadrant = None
-    while t<2:
+    while t<10:
         hear_prob_rat = prob_ping_rat(bot_pos, rat_pos, alpha)
         print(hear_prob_rat)
         quadrant_probabilities = update_probabilities(prob_grid, quadrants, alpha, hear_prob_rat, bot_pos)
         for q, cell in quadrant_probabilities.items():
             print(f"{q}: {cell}")
+
+        print("The probabilities are:")
+        for q, cell in quadrants.items():
+            print(f"{q}: {cell}")
         
         target_quadrant = max(quadrant_probabilities, key=quadrant_probabilities.get)
         print(f"The target quadrant is:\n {target_quadrant}")
-        target_cell = (weighted_center(target_quadrant, quadrants, prob_grid))
+        target_cell = weighted_center(target_quadrant, quadrants, prob_grid)
         print(f"Weighted center of {target_quadrant}: {target_cell}")
 
-        if target_cell and 0 <= target_cell[0] < n and 0 <= target_cell[1] < n and grid_for_map[target_cell[0]][target_cell[1]] != -1:
-            if target_quadrant==current_quadrant:
-                print("Consistency")
-                bot_pos, frames_grid = movement(grid_for_map, target_cell, bot_pos, n, frames_grid)
-                refined_quadrants = refine_quadrants(quadrants[target_quadrant], n)
-                if refined_quadrants:
-                    del quadrants[target_quadrant]
-                    for sub_quad, cells in refined_quadrants.items():
-                        quadrants[sub_quad] = cells
-                    print(f"Refined {target_quadrant} into {list(refined_quadrants.keys())}")
-                else:
-                    print(f"No sub-quadrants to refine in {target_quadrant}")
-            else:
-                print("Else ran")
-                bot_pos, frames_grid = movement(grid_for_map, target_cell, bot_pos, n, frames_grid)
-                current_max_quad = target_quadrant
-        else:
-            print(f"Invalid target cell selected: {target_cell}")
-            print(grid_for_map[target_cell[0]][target_cell[1]])
+    #     if target_cell and 0 <= target_cell[0] < n and 0 <= target_cell[1] < n and grid_for_map[target_cell[0]][target_cell[1]] != -1:
+    #         if target_quadrant==current_quadrant:
+    #             print("Consistency")
+    #             bot_pos, frames_grid = movement(grid_for_map, target_cell, bot_pos, n, frames_grid)
+    #             refined_quadrants = refine_quadrants(quadrants[target_quadrant], n)
+    #             if refined_quadrants:
+    #                 del quadrants[target_quadrant]
+    #                 for sub_quad, cells in refined_quadrants.items():
+    #                     quadrants[sub_quad] = cells
+    #                 print(f"Refined {target_quadrant} into {list(refined_quadrants.keys())}")
+    #             else:
+    #                 print(f"No sub-quadrants to refine in {target_quadrant}")
+    #         else:
+    #             print("Else ran")
+    #             bot_pos, frames_grid = movement(grid_for_map, target_cell, bot_pos, n, frames_grid)
+    #             current_max_quad = target_quadrant
+    #     else:
+    #         print(f"Invalid target cell selected: {target_cell}")
+    #         print(grid_for_map[target_cell[0]][target_cell[1]])
 
-        # bot_pos = new_bot_pos if 'new_bot_pos' in locals() else bot_pos
+    #     # bot_pos = new_bot_pos if 'new_bot_pos' in locals() else bot_pos
 
-        if bot_pos==rat_pos:
-            print("Bot has caught the rat!")
-            frames_grid.append(np.copy(grid_for_map))
-            break
+    #     if bot_pos==rat_pos:
+    #         print("Bot has caught the rat!")
+    #         frames_grid.append(np.copy(grid_for_map))
+    #         break
 
         t+=1
     visualize_simulation_1(frames_grid)
