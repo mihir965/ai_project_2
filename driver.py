@@ -13,8 +13,8 @@ n = 30
 alpha = 0.1
 print(alpha)
 
-# seed_value = random.randrange(1, 1000)
-seed_value = 808
+seed_value = random.randrange(1, 1000)
+# seed_value = 808
 print(seed_value)
 random.seed(seed_value)
 np.random.seed(seed_value)

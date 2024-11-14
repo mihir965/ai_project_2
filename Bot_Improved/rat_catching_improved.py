@@ -84,7 +84,7 @@ def partition_grid(grid, n):
     
     return quadrants
   
-def update_probabilities(prob_grid, prob_grid_dict, alpha, hear_prob, bot_pos, grid_for_map):
+def update_probabilities(prob_grid, prob_grid_dict, alpha, hear_prob, bot_pos):
     quadrant_probabilities = {
         'Q1': 0.0,
         'Q2': 0.0,
@@ -92,7 +92,6 @@ def update_probabilities(prob_grid, prob_grid_dict, alpha, hear_prob, bot_pos, g
         'Q4': 0.0
     }
     total_prob_sensor = 0.0
-    prob_ping_values = {}
     new_prob_grid = np.copy(prob_grid)
 
     if hear_prob:
@@ -135,13 +134,15 @@ def weighted_center(target_quadrant, prob_grid_dict, prob_grid):
     sum_y = 0.0
     sum_p = 0.0
 
+    print(f"Before anything see the probability grid of the target quadrant:\n{print(prob_grid_dict)}")
+
     for cell in prob_grid_dict[target_quadrant]:
         i, j = cell
         p = prob_grid[i][j]
         sum_x += p * i
         sum_y += p * j
         sum_p += p
-        print(sum_x, sum_y, sum_p)
+        # print(sum_x, sum_y, sum_p)
 
     if sum_p > 0:
         x_c = sum_x/sum_p
@@ -156,18 +157,31 @@ def weighted_center(target_quadrant, prob_grid_dict, prob_grid):
 
 def movement(grid_for_map, target_cell, bot_pos, n, frames_grid):
     path = plan_path_bot2(grid_for_map, bot_pos, target_cell, n)
+    went = 0
     if path and len(path)>1:
         halfway = len(path)//2
-        while(len(path)>=halfway and len(path) > 1):
+        print(path)
+        print(f"Halfway is :{path[halfway]}")
+        halfway_coordinates = path[halfway]
+        while True:
+            print(f"Went: {went}")
+            old_pos = bot_pos
             grid_for_map[bot_pos[0]][bot_pos[1]] = 0
-            new_pos = path[1]
-            grid_for_map[new_pos[0]][new_pos[1]] = 3
-            print(f"Moving bot from {bot_pos} to {new_pos}")
+            bot_pos = path.pop(1)
+            grid_for_map[bot_pos[0]][bot_pos[1]] = 3
+            print(f"Moving bot from {old_pos} to {bot_pos}")
+            if bot_pos==halfway_coordinates:
+                break
             frames_grid.append(np.copy(grid_for_map))
-        return new_pos, frames_grid
+            print(bot_pos)
+            went+=1
+        print(f"Moving bot from {old_pos} to {bot_pos}")
+        frames_grid.append(np.copy(grid_for_map))
+        print(bot_pos)
+        return bot_pos, frames_grid
     else:
         print("No valid path found to target cell")
-        return False 
+        return False
 
 def refine_quadrants(quadrant_cells, n):
     if not quadrant_cells:
@@ -195,7 +209,6 @@ def refine_quadrants(quadrant_cells, n):
         else:
             refined_quadrants['Q4'].append(cell)
     
-    # Remove empty sub-quadrants
     refined_quadrants = {k: v for k, v in refined_quadrants.items() if v}
     
     print(f"Refined Quadrants: {list(refined_quadrants.keys())}")
@@ -209,75 +222,46 @@ def main_improved(grid, n, bot_pos, rat_pos, alpha):
     init_kb = list_possible_cells(grid_for_map, n)
     prob_grid = init_prob_cells(grid_for_prob, n, init_kb)
     quadrants = partition_grid(grid_for_map, n)
-    
-    # Debugging: Print initial quadrants
-    print("Initial Quadrants:")
-    for quadrant, cells in quadrants.items():
-        print(f"{quadrant}: {cells}")
-    
-    step = 0
-    current_max_quad = None  # Track the current highest probability quadrant
-    
-    while step < 1000:  # Set a reasonable maximum number of steps
-        # Perform sensing
-        hear_prob_from_rat = prob_ping_rat(bot_pos, rat_pos, alpha)
-        print(f"Step {step}: Heard ping - {hear_prob_from_rat}")
+    t=0
+    current_quadrant = None
+    while t<2:
+        hear_prob_rat = prob_ping_rat(bot_pos, rat_pos, alpha)
+        print(hear_prob_rat)
+        quadrant_probabilities = update_probabilities(prob_grid, quadrants, alpha, hear_prob_rat, bot_pos)
+        for q, cell in quadrant_probabilities.items():
+            print(f"{q}: {cell}")
         
-        # Update probabilities based on sensor reading
-        quadrant_probabilities = update_probabilities(prob_grid, quadrants, alpha, hear_prob_from_rat, bot_pos, grid_for_map)
-        
-        # Debugging: Print quadrant probabilities
-        print("Quadrant Probabilities:")
-        for q, p in quadrant_probabilities.items():
-            print(f"{q}: {p}")
-        
-        # Identify the quadrant with the highest probability
-        if quadrant_probabilities:
-            target_quadrant = max(quadrant_probabilities, key=quadrant_probabilities.get)
-            target_quadrant_prob = quadrant_probabilities[target_quadrant]
-            print(f"Target Quadrant: {target_quadrant} with probability {target_quadrant_prob}")
-            
-            # Calculate the probability-weighted center of the target quadrant
-            target_cell = weighted_center(target_quadrant, quadrants, prob_grid)
-            print(f"Weighted Center of {target_quadrant}: {target_cell}")
-            
-            # Ensure the target cell is valid
-            if target_cell and 0 <= target_cell[0] < n and 0 <= target_cell[1] < n and grid_for_map[target_cell[0]][target_cell[1]] != -1:
-                if target_quadrant == current_max_quad:
-                    # Move completely towards the target quadrant
-                    new_bot_pos, frames_grid = movement(grid_for_map, target_cell, bot_pos, n, frames_grid)
-                    
-                    # Refine the current quadrant into sub-quadrants
-                    refined_quadrants = refine_quadrants(quadrants[target_quadrant], n)
-                    
-                    if refined_quadrants:
-                        # Remove the original quadrant
-                        del quadrants[target_quadrant]
-                        # Add refined sub-quadrants
-                        for sub_quad, cells in refined_quadrants.items():
-                            quadrants[sub_quad] = cells
-                        print(f"Refined {target_quadrant} into {list(refined_quadrants.keys())}")
-                    else:
-                        print(f"No sub-quadrants to refine in {target_quadrant}")
+        target_quadrant = max(quadrant_probabilities, key=quadrant_probabilities.get)
+        print(f"The target quadrant is:\n {target_quadrant}")
+        target_cell = (weighted_center(target_quadrant, quadrants, prob_grid))
+        print(f"Weighted center of {target_quadrant}: {target_cell}")
+
+        if target_cell and 0 <= target_cell[0] < n and 0 <= target_cell[1] < n and grid_for_map[target_cell[0]][target_cell[1]] != -1:
+            if target_quadrant==current_quadrant:
+                print("Consistency")
+                bot_pos, frames_grid = movement(grid_for_map, target_cell, bot_pos, n, frames_grid)
+                refined_quadrants = refine_quadrants(quadrants[target_quadrant], n)
+                if refined_quadrants:
+                    del quadrants[target_quadrant]
+                    for sub_quad, cells in refined_quadrants.items():
+                        quadrants[sub_quad] = cells
+                    print(f"Refined {target_quadrant} into {list(refined_quadrants.keys())}")
                 else:
-                    # Move halfway towards the target quadrant
-                    new_bot_pos, frames_grid = movement(grid_for_map, target_cell, bot_pos, n, frames_grid)
-                    current_max_quad = target_quadrant  # Update the current max quadrant
+                    print(f"No sub-quadrants to refine in {target_quadrant}")
             else:
-                print(f"Invalid target cell selected: {target_cell}")
+                print("Else ran")
+                bot_pos, frames_grid = movement(grid_for_map, target_cell, bot_pos, n, frames_grid)
+                current_max_quad = target_quadrant
         else:
-            print("No quadrants available for targeting.")
-        
-        # Update bot position
-        bot_pos = new_bot_pos if 'new_bot_pos' in locals() else bot_pos
-        
-        # Check if the bot has caught the rat
-        if bot_pos == rat_pos:
+            print(f"Invalid target cell selected: {target_cell}")
+            print(grid_for_map[target_cell[0]][target_cell[1]])
+
+        # bot_pos = new_bot_pos if 'new_bot_pos' in locals() else bot_pos
+
+        if bot_pos==rat_pos:
             print("Bot has caught the rat!")
             frames_grid.append(np.copy(grid_for_map))
             break
-        
-        step += 1  # Increment step counter
-    
-    print(f"Total steps taken: {step}")
+
+        t+=1
     visualize_simulation_1(frames_grid)
