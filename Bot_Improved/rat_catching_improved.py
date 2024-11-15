@@ -85,12 +85,7 @@ def partition_grid(grid, n):
     return quadrants
   
 def update_probabilities(prob_grid, prob_grid_dict, alpha, hear_prob, bot_pos):
-    quadrant_probabilities = {
-        'Q1': 0.0,
-        'Q2': 0.0,
-        'Q3': 0.0,
-        'Q4': 0.0
-    }
+    quadrant_probabilities = {quadrant: 0.0 for quadrant in prob_grid_dict.keys()}
     total_prob_sensor = 0.0
     new_prob_grid = np.copy(prob_grid)
 
@@ -127,9 +122,9 @@ def update_probabilities(prob_grid, prob_grid_dict, alpha, hear_prob, bot_pos):
     else:
         print("Total quadrant probability is zero. Normalization skipped.")
     
-    return quadrant_probabilities
+    return quadrant_probabilities, new_prob_grid
 
-def weighted_center(target_quadrant, prob_grid_dict, prob_grid, grid_for_map):
+def weighted_center(target_quadrant, prob_grid_dict, prob_grid, grid_for_map, n):
     sum_x = 0.0
     sum_y = 0.0
     sum_p = 0.0
@@ -150,7 +145,7 @@ def weighted_center(target_quadrant, prob_grid_dict, prob_grid, grid_for_map):
             print("invalid")
             cardinal_directions = [(0,1), (0,-1), (1,0), (-1,0)]
             for i, j in cardinal_directions:
-                    while not is_unblocked(grid_for_map, x_final, y_final):
+                    while is_valid(x_final, y_final, n) and not is_unblocked(grid_for_map, x_final, y_final):
                         x_final, y_final = x_final+i, y_final+j
         target_cell = (x_final, y_final)
     else:
@@ -188,7 +183,7 @@ def movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t):
         print(f"No valid path found to target cell: {target_cell}")
         return False, frames_grid, t
 
-def refine_quadrants(quadrant_cells, n):
+def refine_quadrants(parent_quadrant_name, quadrant_cells, n):
     print("Refine Quadrants ran")
     if not quadrant_cells:
         print("No cells to refine in the quadrant.")
@@ -198,22 +193,22 @@ def refine_quadrants(quadrant_cells, n):
     avg_col = sum(j for i, j in quadrant_cells) / len(quadrant_cells)
     
     refined_quadrants = {
-        'Q1': [],
-        'Q2': [],
-        'Q3': [],
-        'Q4': []
+        f"{parent_quadrant_name}_Q1": [],
+        f"{parent_quadrant_name}_Q2": [],
+        f"{parent_quadrant_name}_Q3": [],
+        f"{parent_quadrant_name}_Q4": []
     }
 
     for cell in quadrant_cells:
         i, j = cell
         if i < avg_row and j < avg_col:
-            refined_quadrants['Q1'].append(cell)
+            refined_quadrants[f'{parent_quadrant_name}_Q1'].append(cell)
         elif i < avg_row and j >= avg_col:
-            refined_quadrants['Q2'].append(cell)
+            refined_quadrants[f'{parent_quadrant_name}_Q2'].append(cell)
         elif i >= avg_row and j < avg_col:
-            refined_quadrants['Q3'].append(cell)
+            refined_quadrants[f'{parent_quadrant_name}_Q3'].append(cell)
         else:
-            refined_quadrants['Q4'].append(cell)
+            refined_quadrants[f'{parent_quadrant_name}_Q4'].append(cell)
     
     refined_quadrants = {k: v for k, v in refined_quadrants.items() if v}
     
@@ -233,13 +228,13 @@ def main_improved(grid, n, bot_pos, rat_pos, alpha):
     while True:
         hear_prob_rat = prob_ping_rat(bot_pos, rat_pos, alpha)
         print(hear_prob_rat)
-        quadrant_probabilities = update_probabilities(prob_grid, quadrants, alpha, hear_prob_rat, bot_pos)
+        quadrant_probabilities, prob_grid = update_probabilities(prob_grid, quadrants, alpha, hear_prob_rat, bot_pos)
         # for q, cell in quadrant_probabilities.items():
         #     print(f"{q}: {cell}")
         
         target_quadrant = max(quadrant_probabilities, key=quadrant_probabilities.get)
         print(f"The target quadrant is:\n {target_quadrant}")
-        target_cell = weighted_center(target_quadrant, quadrants, prob_grid, grid_for_map)
+        target_cell = weighted_center(target_quadrant, quadrants, prob_grid, grid_for_map, n)
         print(f"Weighted center of {target_quadrant}: {target_cell}")
         if target_cell and 0 <= target_cell[0] < n and 0 <= target_cell[1] < n and grid_for_map[target_cell[0]][target_cell[1]] != -1:
             if target_quadrant==current_quadrant:
@@ -247,11 +242,10 @@ def main_improved(grid, n, bot_pos, rat_pos, alpha):
                 if bot_pos==target_cell:
                     continue
                 bot_pos, frames_grid, t = movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t)
-                refined_quadrants = refine_quadrants(quadrants[target_quadrant], n)
+                refined_quadrants = refine_quadrants(target_quadrant, quadrants[target_quadrant], n)
                 if refined_quadrants:
                     del quadrants[target_quadrant]
-                    for sub_quad, cells in refined_quadrants.items():
-                        quadrants[sub_quad] = cells
+                    quadrants.update(refined_quadrants)
                     print(f"Refined {target_quadrant} into {list(refined_quadrants.keys())}")
                 else:
                     print(f"No sub-quadrants to refine in {target_quadrant}")
@@ -269,10 +263,12 @@ def main_improved(grid, n, bot_pos, rat_pos, alpha):
 
         if bot_pos==rat_pos:
             print("Bot has caught the rat!")
+            print(f"Steps taken: {t}")
             frames_grid.append(np.copy(grid_for_map))
             break
         
         if t>1000:
             print("timeout")
             break
+
     visualize_simulation_1(frames_grid)
