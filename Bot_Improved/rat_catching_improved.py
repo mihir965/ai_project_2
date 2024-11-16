@@ -168,6 +168,10 @@ def movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t):
             # old_pos = bot_pos
             grid_for_map[bot_pos[0]][bot_pos[1]] = 0
             bot_pos = path.pop(1)
+            if grid_for_map[bot_pos[0]][bot_pos[1]] == 2:
+                print("The rat was caught!")
+                grid_for_map[bot_pos[0]][bot_pos[1]] = 3
+                break
             grid_for_map[bot_pos[0]][bot_pos[1]] = 3
             # print(f"Moving bot from {old_pos} to {bot_pos}")
             if bot_pos==halfway_coordinates:
@@ -215,6 +219,20 @@ def refine_quadrants(parent_quadrant_name, quadrant_cells, n):
     print(f"Refined Quadrants: {list(refined_quadrants.keys())}")
     return refined_quadrants
 
+def last_ditch_check_neighbours(bot_pos, grid_for_map, n, frames_grid, t):
+    cardinality = [[1,0],[-1,0],[0,1],[0,-1]]
+    for i, j in cardinality:
+        new_i, new_j = bot_pos[0]+i, bot_pos[1]+j
+        if is_valid(new_i, new_j, n):
+            t+=1
+            bot_pos = (new_i, new_j)
+            if grid_for_map[bot_pos[0]][[bot_pos[1]]]==2:
+                grid_for_map[bot_pos[0]][bot_pos[1]] = 3
+                print("The rat was caught in a last ditch attempt!")
+                frames_grid.append(np.copy(grid_for_map))
+                return bot_pos, frames_grid
+    return bot_pos, frames_grid
+
 def main_improved(grid, n, bot_pos, rat_pos, alpha):
     frames_grid = []
     grid_for_map = np.copy(grid)
@@ -240,7 +258,16 @@ def main_improved(grid, n, bot_pos, rat_pos, alpha):
             if target_quadrant==current_quadrant:
                 print("Consistency")
                 if bot_pos==target_cell:
-                    continue
+                    t+=1
+                    bot_pos, frames_grid = last_ditch_check_neighbours(bot_pos, grid_for_map, n, frames_grid, t)
+                    if grid_for_map[bot_pos[0]][bot_pos[1]]==2:
+                        print("The rat was caught!!")
+                        break
+                    print("The bot is already at the target cell")
+                    if t>2000:
+                        break
+                    else:
+                        continue
                 bot_pos, frames_grid, t = movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t)
                 refined_quadrants = refine_quadrants(target_quadrant, quadrants[target_quadrant], n)
                 if refined_quadrants:
@@ -252,14 +279,23 @@ def main_improved(grid, n, bot_pos, rat_pos, alpha):
             else:
                 print("Else ran")
                 if bot_pos==target_cell:
-                    continue
+                    t+=1
+                    bot_pos, frames_grid = last_ditch_check_neighbours(bot_pos, grid_for_map, n, frames_grid, t)
+                    if grid_for_map[bot_pos[0]][bot_pos[1]]==2:
+                        print("The rat was caught!!")
+                        break
+                    print("The bot is already at the target cell")
+                    if t>2000:
+                        break
+                    else:
+                        continue
                 bot_pos, frames_grid, t= movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t)
                 if bot_pos==False:
                     break
                 current_quadrant = target_quadrant
         else:
             print(f"Invalid target cell selected: {target_cell}")
-            print(grid_for_map[target_cell[0]][target_cell[1]])
+            # print(grid_for_map[target_cell[0]][target_cell[1]])
 
         if bot_pos==rat_pos:
             print("Bot has caught the rat!")
@@ -267,7 +303,7 @@ def main_improved(grid, n, bot_pos, rat_pos, alpha):
             frames_grid.append(np.copy(grid_for_map))
             break
         
-        if t>1000:
+        if t>2000:
             print("timeout")
             break
 
