@@ -4,6 +4,12 @@ import math
 import random
 import numpy as np
 
+def log_simulation_result(simulation_num, seed, alpha, outcome):
+    with open("simulation_log.csv", mode="a", newline="") as file:
+        writer = csv.writer(file)
+        # Ensure all four values are written in the correct order
+        writer.writerow([simulation_num, seed, f"{alpha:.2f}", outcome])
+
 # The rat can only occupy an open cell
 def list_possible_cells(grid, n):
     possible_cells = []
@@ -75,7 +81,7 @@ def init_prob_cells(grid, n, list_poss_cells):
         new_grid[cell[0]][cell[1]] = init_value
     return new_grid
 
-def main_function_catching(grid, n, bot_pos, rat_pos, alpha):
+def main_function_catching(grid, n, bot_pos, rat_pos, alpha, simulation_num, seed_value):
     frames_heatmap = []
     frames_grid = []
     grid_for_map = np.copy(grid)
@@ -126,12 +132,19 @@ def main_function_catching(grid, n, bot_pos, rat_pos, alpha):
         t += 1
         switch = not switch
 
-        if t > 10000:
+        if t > 2000:
             print(f"The bot is stuck or taking too long:")
+            log_simulation_result(simulation_num, seed_value, alpha, "Failure")
             return False
 
         if bot_pos == rat_pos:
             print(f"Probability at rat's position ({rat_pos}): {prob_grid[rat_pos[0]][rat_pos[1]]}")
             print("Bot has caught the rat")
+            log_simulation_result(simulation_num, seed_value, alpha, "Success")
             print(f"Total steps taken: {t}")
-            return True, frames_grid
+            return True
+    log_simulation_result(simulation_num, seed_value, alpha, "Failure")
+    return False
+
+
+#Removed frames grid from return

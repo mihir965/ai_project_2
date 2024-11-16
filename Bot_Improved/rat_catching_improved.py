@@ -4,6 +4,12 @@ import math
 import random
 import numpy as np
 
+def log_simulation_result(simulation_num, seed, alpha, outcome):
+    with open("simulation_log.csv", mode="a", newline="") as file:
+        writer = csv.writer(file)
+        # Ensure all four values are written in the correct order
+        writer.writerow([simulation_num, seed, f"{alpha:.2f}", outcome])
+
 #The rat can only occupy an open cell
 def list_possible_cells(grid, n):
     possible_cells = []
@@ -233,7 +239,7 @@ def last_ditch_check_neighbours(bot_pos, grid_for_map, n, frames_grid, t):
                 return bot_pos, frames_grid
     return bot_pos, frames_grid
 
-def main_improved(grid, n, bot_pos, rat_pos, alpha):
+def main_improved(grid, n, bot_pos, rat_pos, alpha, simulation_num, seed_value):
     frames_grid = []
     grid_for_map = np.copy(grid)
     frames_grid.append(np.copy(grid_for_map))
@@ -262,10 +268,15 @@ def main_improved(grid, n, bot_pos, rat_pos, alpha):
                     bot_pos, frames_grid = last_ditch_check_neighbours(bot_pos, grid_for_map, n, frames_grid, t)
                     if grid_for_map[bot_pos[0]][bot_pos[1]]==2:
                         print("The rat was caught!!")
-                        break
+                        print(f"Steps taken: {t}")
+                        log_simulation_result(simulation_num, seed_value, alpha, "Success")
+                        frames_grid.append(np.copy(grid_for_map))
+                        return True
                     print("The bot is already at the target cell")
                     if t>2000:
-                        break
+                        print("timeout")
+                        log_simulation_result(simulation_num, seed_value, alpha, "Failure")
+                        return False
                     else:
                         continue
                 bot_pos, frames_grid, t = movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t)
@@ -283,10 +294,15 @@ def main_improved(grid, n, bot_pos, rat_pos, alpha):
                     bot_pos, frames_grid = last_ditch_check_neighbours(bot_pos, grid_for_map, n, frames_grid, t)
                     if grid_for_map[bot_pos[0]][bot_pos[1]]==2:
                         print("The rat was caught!!")
-                        break
+                        print(f"Steps taken: {t}")
+                        log_simulation_result(simulation_num, seed_value, alpha, "Success")
+                        frames_grid.append(np.copy(grid_for_map))
+                        return True
                     print("The bot is already at the target cell")
                     if t>2000:
-                        break
+                        print("timeout")
+                        log_simulation_result(simulation_num, seed_value, alpha, "Failure")
+                        return False
                     else:
                         continue
                 bot_pos, frames_grid, t= movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t)
@@ -295,16 +311,19 @@ def main_improved(grid, n, bot_pos, rat_pos, alpha):
                 current_quadrant = target_quadrant
         else:
             print(f"Invalid target cell selected: {target_cell}")
+            t+=1
             # print(grid_for_map[target_cell[0]][target_cell[1]])
 
         if bot_pos==rat_pos:
             print("Bot has caught the rat!")
             print(f"Steps taken: {t}")
+            log_simulation_result(simulation_num, seed_value, alpha, "Success")
             frames_grid.append(np.copy(grid_for_map))
-            break
+            return True
         
         if t>2000:
             print("timeout")
-            break
-
-    visualize_simulation_1(frames_grid)
+            log_simulation_result(simulation_num, seed_value, alpha, "Failure")
+            return False
+        
+        #Removed frames grid from return to get only True or false

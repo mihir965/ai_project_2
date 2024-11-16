@@ -56,7 +56,7 @@ def run_single_comparison(alpha, simulation_num):
     
     return baseline_caught, improved_caught
 
-def run_comparisons(alpha_start=0.0, alpha_end=0.2, alpha_step=0.05, simulations=1):
+def run_comparisons(alpha_start=0.0, alpha_end=0.2, alpha_step=0.05, simulations=50):
     """
     Run simulations for both bots and compare their accuracies across multiple alpha values.
     """
