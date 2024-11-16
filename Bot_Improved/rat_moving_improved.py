@@ -291,7 +291,21 @@ def refine_quadrants(parent_quadrant_name, quadrant_cells, n):
     print(f"Refined Quadrants: {list(refined_quadrants.keys())}")
     return refined_quadrants
 
-def main_improved_with_moving_rat(grid, n, bot_pos, rat_pos, alpha):
+def last_ditch_check_neighbours(bot_pos, grid_for_map, n, frames_grid, t):
+    cardinality = [[1,0],[-1,0],[0,1],[0,-1]]
+    for i, j in cardinality:
+        new_i, new_j = bot_pos[0]+i, bot_pos[1]+j
+        if is_valid(new_i, new_j, n):
+            t+=1
+            bot_pos = (new_i, new_j)
+            if grid_for_map[bot_pos[0]][[bot_pos[1]]]==2:
+                grid_for_map[bot_pos[0]][bot_pos[1]] = 3
+                print("The rat was caught in a last ditch attempt!")
+                frames_grid.append(np.copy(grid_for_map))
+                return bot_pos, frames_grid
+    return bot_pos, frames_grid
+
+def main_improved_with_moving_rat(grid, n, bot_pos, rat_pos, alpha, simulation_num, seed_value):
     frames_grid = []  # Store grid frames for bot and rat visualization
     frames_heatmap = []  # Store probability heatmap frames
     grid_for_map = np.copy(grid)
@@ -304,17 +318,14 @@ def main_improved_with_moving_rat(grid, n, bot_pos, rat_pos, alpha):
     t = 0
 
     while True:
-        # Move the rat
         old_rat_pos = rat_pos
         rat_pos = simulate_rat_movement(grid, rat_pos)
         print(f"Step {t}: Rat moved from {old_rat_pos} to {rat_pos}")
 
-        # Update probabilities based on sensor and rat movement
         hear_prob = prob_ping_rat(bot_pos, rat_pos, alpha)
         prob_grid = update_cells_moving_rat(prob_grid, init_kb, hear_prob, bot_pos, alpha, grid)
-        frames_heatmap.append(np.copy(prob_grid))  # Append updated heatmap
+        frames_heatmap.append(np.copy(prob_grid))
 
-        # Determine target cell with maximum probability
         max_prob = np.max(prob_grid)
         result = np.where(prob_grid == max_prob)
         max_cells = list(zip(result[0], result[1]))
