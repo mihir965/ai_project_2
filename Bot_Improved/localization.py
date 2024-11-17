@@ -140,6 +140,7 @@ def main_function(grid, n, bot_pos):
         if len(bot_kb) == 0:
             print("Error: No possible positions remain in the knowledge base.")
             break
+        #To keep switching between the block check and direction check
         blocked_check = not blocked_check
         print(f"Before next time step: length kb: {len(bot_kb)}")
         t+=1

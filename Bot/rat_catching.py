@@ -7,7 +7,6 @@ import numpy as np
 def log_simulation_result(simulation_num, seed, alpha, outcome):
     with open("simulation_log.csv", mode="a", newline="") as file:
         writer = csv.writer(file)
-        # Ensure all four values are written in the correct order
         writer.writerow([simulation_num, seed, f"{alpha:.2f}", outcome])
 
 # The rat can only occupy an open cell
@@ -120,6 +119,7 @@ def main_function_catching(grid, n, bot_pos, rat_pos, alpha, simulation_num, see
                     print("No reachable cells with maximum probability.")
                     break
                 continue
+            #We use the same movement logic as for the first project
             path = plan_path_bot2(grid_for_map, bot_pos, target_cell, n)
             if path is None or len(path) <= 1:
                 print("No path found to the target cell.")

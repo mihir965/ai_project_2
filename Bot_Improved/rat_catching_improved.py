@@ -7,7 +7,6 @@ import numpy as np
 def log_simulation_result(simulation_num, seed, alpha, outcome):
     with open("simulation_log.csv", mode="a", newline="") as file:
         writer = csv.writer(file)
-        # Ensure all four values are written in the correct order
         writer.writerow([simulation_num, seed, f"{alpha:.2f}", outcome])
 
 #The rat can only occupy an open cell
@@ -65,9 +64,7 @@ def partition_grid(grid, n):
         'Q3': [],
         'Q4': []
     }
-
     mid = n//2
-
     for i in range(mid):
         for j in range(mid):
             if is_possible_cell(grid, i, j):
@@ -90,6 +87,7 @@ def partition_grid(grid, n):
     
     return quadrants
   
+#Updating probabilities of grid cells based on whether the ping was heard or not. We aggregate the probablity for the quadrant and return to pick the maximum one
 def update_probabilities(prob_grid, prob_grid_dict, alpha, hear_prob, bot_pos):
     quadrant_probabilities = {quadrant: 0.0 for quadrant in prob_grid_dict.keys()}
     total_prob_sensor = 0.0
@@ -130,6 +128,7 @@ def update_probabilities(prob_grid, prob_grid_dict, alpha, hear_prob, bot_pos):
     
     return quadrant_probabilities, new_prob_grid
 
+#This is for selecting the target cell within the target quadrant
 def weighted_center(target_quadrant, prob_grid_dict, prob_grid, grid_for_map, n):
     sum_x = 0.0
     sum_y = 0.0
@@ -159,6 +158,7 @@ def weighted_center(target_quadrant, prob_grid_dict, prob_grid, grid_for_map, n)
 
     return target_cell   
 
+#We move halfway first, then if consistency is there, we move all the way. t is updated here since we are not alternating between movement and sensing.
 def movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t):
     path = plan_path_bot2(grid_for_map, bot_pos, target_cell, n)
     if path and len(path)>1:
@@ -193,6 +193,7 @@ def movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t):
         print(f"No valid path found to target cell: {target_cell}")
         return False, frames_grid, t
 
+#Once a quadrant has been selected as consistent, we refine it to narrow down the search and repeat the entire process.
 def refine_quadrants(parent_quadrant_name, quadrant_cells, n):
     print("Refine Quadrants ran")
     if not quadrant_cells:
@@ -225,6 +226,7 @@ def refine_quadrants(parent_quadrant_name, quadrant_cells, n):
     print(f"Refined Quadrants: {list(refined_quadrants.keys())}")
     return refined_quadrants
 
+#Sometimes, the bot would be stuck on the target cell, while being very close to the rat, This is a last ditch attempt to get the rat
 def last_ditch_check_neighbours(bot_pos, grid_for_map, n, frames_grid, t):
     cardinality = [[1,0],[-1,0],[0,1],[0,-1]]
     for i, j in cardinality:

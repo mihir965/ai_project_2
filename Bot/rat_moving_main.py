@@ -7,7 +7,6 @@ import numpy as np
 def log_simulation_result(simulation_num, seed, alpha, outcome):
     with open("simulation_log.csv", mode="a", newline="") as file:
         writer = csv.writer(file)
-        # Ensure all four values are written in the correct order
         writer.writerow([simulation_num, seed, f"{alpha:.2f}", outcome])
 
 def list_possible_cells(grid, n):
@@ -20,7 +19,6 @@ def list_possible_cells(grid, n):
     return possible_cells
 
 def get_valid_rat_moves(grid, rat_pos):
-    """Get all possible moves for the rat using existing utility functions"""
     n = len(grid)
     possible_moves = []
     directions = [(-1,0), (0,1), (1,0), (0,-1)]
@@ -51,7 +49,7 @@ def prob_ping_j(bot_pos, j, alpha):
     return math.exp(exponent)
 
 def update_prob_after_movement(prob_grid, grid):
-    """Update probability grid after rat movement using environment constraints"""
+    #Update probability grid after rat movement using environment constraints
     n = len(prob_grid)
     new_prob_grid = np.zeros((n, n))
     
@@ -67,7 +65,6 @@ def update_prob_after_movement(prob_grid, grid):
     return new_prob_grid
 
 def update_cells_moving_rat(prob_grid, kb, hear_prob, bot_pos, alpha, grid):
-    """Updated version of update_cells that handles moving rat"""
     new_prob_grid = np.copy(prob_grid)
     total_prob_sensor = 0
     
@@ -101,12 +98,11 @@ def init_prob_cells(grid, n, list_poss_cells):
     return new_grid
 
 def simulate_rat_movement(grid, rat_pos):
-    """Move rat to a random valid adjacent cell using environment constraints"""
     valid_moves = get_valid_rat_moves(grid, rat_pos)
     new_pos = random.choice(valid_moves)
-    if new_pos != rat_pos:  # Only update grid if rat actually moves
-        grid[rat_pos[0]][rat_pos[1]] = 0  # Clear old position
-        grid[new_pos[0]][new_pos[1]] = 2  # Set new position
+    if new_pos != rat_pos:
+        grid[rat_pos[0]][rat_pos[1]] = 0
+        grid[new_pos[0]][new_pos[1]] = 2
     return new_pos
 
 def main_function_catching_moving_rat(grid, n, bot_pos, rat_pos, alpha, simulation_num, seed_value, driver_comparison):
@@ -154,19 +150,16 @@ def main_function_catching_moving_rat(grid, n, bot_pos, rat_pos, alpha, simulati
                     print("No reachable cells with maximum probability.")
                     break
                 continue
-            # Move bot towards highest probability cell
             path = plan_path_bot2(grid, bot_pos, max_cells[0], n)
             if path is None or len(path) <= 1:
                 print("No path found to the target cell.")
                 break  
             # Update bot position
             grid[bot_pos[0]][bot_pos[1]] = 0
-            bot_pos = path[1]  # Take first step of path
+            bot_pos = path[1]
             grid[bot_pos[0]][bot_pos[1]] = 3   
-            # Move rat after bot's move
             rat_pos = simulate_rat_movement(grid, rat_pos)
 
-        # Store grid frame
         frames_grid.append(np.copy(grid))        
         t += 1
         switch = not switch

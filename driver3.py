@@ -17,7 +17,7 @@ def initialize_comparison_log():
         writer.writerow(["Simulation Number", "Seed Value", "Alpha", "Baseline Outcome", "Improved Outcome", "Baseline Move Outcome", "Improved Move Outcome"])
 
 def run_single_comparison(alpha, simulation_num):
-    # Generate a random seed for this simulation
+
     seed_value = random.randint(1, 1000)
     print(f"Alpha: {alpha:.2f}, Simulation: {simulation_num}, Seed: {seed_value}")
     random.seed(seed_value)
@@ -26,7 +26,7 @@ def run_single_comparison(alpha, simulation_num):
     # Initialize the grid and bot/rat positions
     grid = grid_init(n)
     bot_pos_baseline = bot_init(grid, n, 3)
-    bot_pos_improved = bot_pos_baseline  # Both bots start in the same position
+    bot_pos_improved = bot_pos_baseline
     rat_pos = rat_init(grid, n, 2)
     
     # Run the baseline bot
@@ -55,9 +55,8 @@ def run_single_comparison(alpha, simulation_num):
 
 def run_comparisons(alpha_start=0.0, alpha_end=0.2, alpha_step=0.01, simulations=50):
 
-    initialize_comparison_log()  # Prepare the comparison log file
+    initialize_comparison_log()
     
-    # Generate alpha values from start to end with the given step size
     alpha_values = np.arange(alpha_start, alpha_end + alpha_step, alpha_step)
     
     # Track results for each bot
@@ -92,5 +91,4 @@ def run_comparisons(alpha_start=0.0, alpha_end=0.2, alpha_step=0.01, simulations
             writer.writerow([f"{alpha:.2f}", f"{baseline_acc:.2%}", f"{baseline_acc_move:.2%}" , f"{improved_acc:.2%}", f"{improved_acc_move:.2%}"])
 
 if __name__ == "__main__":
-    # Start the simulation across multiple values of alpha
     run_comparisons()
