@@ -305,6 +305,10 @@ def main_improved_with_moving_rat(grid, n, bot_pos, rat_pos, alpha): # simulatio
 
         frames_grid.append(np.copy(grid_for_map))
 
+        if rat_pos == bot_pos:
+            print("The rat ran into the bot!!")
+            return False, frames_grid
+    
         # Update probabilities based on sensor and rat movement
         hear_prob = prob_ping_rat(bot_pos, rat_pos, alpha)
         quadrant_probabilities, prob_grid = update_probabilities(
