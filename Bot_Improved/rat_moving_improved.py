@@ -89,9 +89,7 @@ def partition_grid(grid, n):
         'Q3': [],
         'Q4': []
     }
-
     mid = n//2
-
     for i in range(mid):
         for j in range(mid):
             if is_possible_cell(grid, i, j):
@@ -170,8 +168,6 @@ def update_prob_after_movement(prob_grid, grid):
                 for move in valid_moves:
                     new_prob_grid[move[0]][move[1]] += move_prob
     return new_prob_grid
-
-# Probability update for moving rat
 
 def weighted_center(target_quadrant, prob_grid_dict, prob_grid, grid_for_map, n):
     sum_x = 0.0
@@ -286,7 +282,7 @@ def last_ditch_check_neighbours(bot_pos, grid_for_map, n, frames_grid, t):
                 return bot_pos, frames_grid
     return bot_pos, frames_grid
 
-def main_improved_with_moving_rat(grid, n, bot_pos, rat_pos, alpha): # simulation_num, seed_value
+def main_improved_with_moving_rat(grid, n, bot_pos, rat_pos, alpha, simulation_num, seed_value, driver_comparison): # simulation_num, seed_value
     frames_grid = []
     frames_heatmap = []
     grid_for_map = np.copy(grid)
@@ -307,7 +303,9 @@ def main_improved_with_moving_rat(grid, n, bot_pos, rat_pos, alpha): # simulatio
 
         if rat_pos == bot_pos:
             print("The rat ran into the bot!!")
-            return False, frames_grid
+            if not driver_comparison:
+                visualize_simulation_1(frames_grid)
+            return False
     
         # Update probabilities based on sensor and rat movement
         hear_prob = prob_ping_rat(bot_pos, rat_pos, alpha)
@@ -329,13 +327,17 @@ def main_improved_with_moving_rat(grid, n, bot_pos, rat_pos, alpha): # simulatio
                     if grid_for_map[bot_pos[0]][bot_pos[1]]==2:
                         print("The rat was caught!!")
                         print(f"Steps taken: {t}")
-                        # log_simulation_result(simulation_num, seed_value, alpha, "Success")
+                        log_simulation_result(simulation_num, seed_value, alpha, "Success")
                         frames_grid.append(np.copy(grid_for_map))
+                        if not driver_comparison:
+                            visualize_simulation_1(frames_grid)
                         return True
                     print("Bot already at the target cell.")
                     if t>2000:
                         print("timeout")
-                        # log_simulation_result(simulation_num, seed_value, alpha, "Failure")
+                        log_simulation_result(simulation_num, seed_value, alpha, "Failure")
+                        if not driver_comparison:
+                            visualize_simulation_1(frames_grid)
                         return False
                     else:
                         continue
@@ -355,13 +357,17 @@ def main_improved_with_moving_rat(grid, n, bot_pos, rat_pos, alpha): # simulatio
                     if grid_for_map[bot_pos[0]][bot_pos[1]]==2:
                         print("The rat was caught!!")
                         print(f"Steps taken: {t}")
-                        # log_simulation_result(simulation_num, seed_value, alpha, "Success")
+                        log_simulation_result(simulation_num, seed_value, alpha, "Success")
                         frames_grid.append(np.copy(grid_for_map))
+                        if not driver_comparison:
+                            visualize_simulation_1(frames_grid)
                         return True
                     print("Bot already at the target cell.")
                     if t>2000:
                         print("timeout")
-                        # log_simulation_result(simulation_num, seed_value, alpha, "Failure")
+                        log_simulation_result(simulation_num, seed_value, alpha, "Failure")
+                        if not driver_comparison:
+                            visualize_simulation_1(frames_grid)
                         return False
                     else:
                         continue
@@ -377,12 +383,16 @@ def main_improved_with_moving_rat(grid, n, bot_pos, rat_pos, alpha): # simulatio
         # Check if bot catches the rat
         if bot_pos == rat_pos:
             print(f"Bot caught the rat at {bot_pos} in {t} steps!")
-            # log_simulation_result(simulation_num, seed_value, alpha, "Success")
+            log_simulation_result(simulation_num, seed_value, alpha, "Success")
             frames_grid.append(np.copy(grid_for_map)) 
-            return True, frames_grid
+            if not driver_comparison:
+                visualize_simulation_1(frames_grid)
+            return True
 
         # Timeout condition
         if t > 1000:
             print("Timeout: Bot took too long.")
-            # log_simulation_result(simulation_num, seed_value, alpha, "Failure")
-            return False, frames_grid  
+            log_simulation_result(simulation_num, seed_value, alpha, "Failure")
+            if not driver_comparison:
+                visualize_simulation_1(frames_grid)
+            return False

@@ -12,17 +12,11 @@ from collections import defaultdict
 n = 30
 
 def initialize_comparison_log():
-    """
-    Initialize the CSV log file with headers for comparison results.
-    """
     with open("comparison_log.csv", mode="w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(["Simulation Number", "Seed Value", "Alpha", "Baseline Outcome", "Improved Outcome"])
 
 def run_single_comparison(alpha, simulation_num):
-    """
-    Run a single simulation for both bots (baseline and improved) using the same random seed.
-    """
     # Generate a random seed for this simulation
     seed_value = random.randint(1, 1000)
     print(f"Alpha: {alpha:.2f}, Simulation: {simulation_num}, Seed: {seed_value}")
@@ -36,7 +30,7 @@ def run_single_comparison(alpha, simulation_num):
     rat_pos = rat_init(grid, n, 2)
     
     # Run the baseline bot
-    baseline_caught = main_function_catching(grid, n, bot_pos_baseline, rat_pos, alpha, simulation_num, seed_value)
+    baseline_caught = main_function_catching(grid, n, bot_pos_baseline, rat_pos, alpha, simulation_num, seed_value, True)
     
     # Reset the environment for the improved bot using the same seed
     random.seed(seed_value)
@@ -56,9 +50,7 @@ def run_single_comparison(alpha, simulation_num):
     return baseline_caught, improved_caught
 
 def run_comparisons(alpha_start=0.0, alpha_end=0.2, alpha_step=0.05, simulations=50):
-    """
-    Run simulations for both bots and compare their accuracies across multiple alpha values.
-    """
+
     initialize_comparison_log()  # Prepare the comparison log file
     
     # Generate alpha values from start to end with the given step size

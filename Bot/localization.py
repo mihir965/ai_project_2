@@ -108,16 +108,19 @@ def main_function(grid, n, bot_pos):
     print(f"Original bot position that simulation knows: {bot_pos}")
     open_list = list_open_cells(grid, n)
     t = 0
+    blocked_sensing = 0
+    direction_sensing = 0
     last_move_direction = None
     bot_kb = open_list
-    print(len(bot_kb))
+    print(f"The length of the Initial Bot Knowledge base: {len(bot_kb)}")
     blocked_check = True
     while len(bot_kb) > 1:
         if blocked_check:
             blocked = sensing_neighbours_blocked(grid, bot_pos, n) 
             bot_kb = update_kb_blocked(bot_kb, blocked, grid, n)
+            blocked_sensing+=1
             print(f"Number of blocked cells: {blocked}")
-            print(f"Length of kb: {len(bot_kb)}")
+            print(f"Length of kb after sensing blocked neighbours: {len(bot_kb)}")
             print("End of blocked check")
             print(f"Knowldege base after block check:\n{bot_kb}")
         if not blocked_check:
@@ -133,6 +136,7 @@ def main_function(grid, n, bot_pos):
             if move_check:
                 last_move_direction = dir_check
             print(f"Knowldege base after direction check:\n{bot_kb}")
+            direction_sensing+=1
         if len(bot_kb) == 0:
             print("Error: No possible positions remain in the knowledge base.")
             break
@@ -141,5 +145,7 @@ def main_function(grid, n, bot_pos):
         t+=1
     if len(bot_kb)==1:
         print(f"Remaining KB: {bot_kb[0]}\n Bot Pos: {bot_pos}")
-    print(t)
+    print(f"Time Steps taken: {t}")
+    print(f"Number of Blocked cells sensing actions: {blocked_sensing}")
+    print(f"Number of direction sensing actions: {direction_sensing}")
     return bot_kb[0]

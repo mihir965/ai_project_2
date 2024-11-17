@@ -81,7 +81,7 @@ def init_prob_cells(grid, n, list_poss_cells):
         new_grid[cell[0]][cell[1]] = init_value
     return new_grid
 
-def main_function_catching(grid, n, bot_pos, rat_pos, alpha, simulation_num, seed_value):
+def main_function_catching(grid, n, bot_pos, rat_pos, alpha, simulation_num, seed_value, driver_comparison):
     frames_heatmap = []
     frames_grid = []
     grid_for_map = np.copy(grid)
@@ -142,8 +142,12 @@ def main_function_catching(grid, n, bot_pos, rat_pos, alpha, simulation_num, see
             print("Bot has caught the rat")
             log_simulation_result(simulation_num, seed_value, alpha, "Success")
             print(f"Total steps taken: {t}")
+            if not driver_comparison:
+                visualize_simulation_1(frames_grid)
             return True
     log_simulation_result(simulation_num, seed_value, alpha, "Failure")
+    if not driver_comparison:
+        visualize_simulation_1(frames_grid)
     return False
 
 

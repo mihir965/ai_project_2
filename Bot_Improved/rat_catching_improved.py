@@ -239,7 +239,7 @@ def last_ditch_check_neighbours(bot_pos, grid_for_map, n, frames_grid, t):
                 return bot_pos, frames_grid
     return bot_pos, frames_grid
 
-def main_improved(grid, n, bot_pos, rat_pos, alpha, simulation_num, seed_value):
+def main_improved(grid, n, bot_pos, rat_pos, alpha, simulation_num, seed_value, driver_comparison):
     frames_grid = []
     grid_for_map = np.copy(grid)
     frames_grid.append(np.copy(grid_for_map))
@@ -271,11 +271,15 @@ def main_improved(grid, n, bot_pos, rat_pos, alpha, simulation_num, seed_value):
                         print(f"Steps taken: {t}")
                         log_simulation_result(simulation_num, seed_value, alpha, "Success")
                         frames_grid.append(np.copy(grid_for_map))
+                        if not driver_comparison:
+                            visualize_simulation_1(frames_grid)
                         return True
                     print("The bot is already at the target cell")
                     if t>2000:
                         print("timeout")
                         log_simulation_result(simulation_num, seed_value, alpha, "Failure")
+                        if not driver_comparison:
+                            visualize_simulation_1(frames_grid)
                         return False
                     else:
                         continue
@@ -297,11 +301,15 @@ def main_improved(grid, n, bot_pos, rat_pos, alpha, simulation_num, seed_value):
                         print(f"Steps taken: {t}")
                         log_simulation_result(simulation_num, seed_value, alpha, "Success")
                         frames_grid.append(np.copy(grid_for_map))
+                        if not driver_comparison:
+                            visualize_simulation_1(frames_grid)
                         return True
                     print("The bot is already at the target cell")
                     if t>2000:
                         print("timeout")
                         log_simulation_result(simulation_num, seed_value, alpha, "Failure")
+                        if not driver_comparison:
+                            visualize_simulation_1(frames_grid)
                         return False
                     else:
                         continue
@@ -319,11 +327,15 @@ def main_improved(grid, n, bot_pos, rat_pos, alpha, simulation_num, seed_value):
             print(f"Steps taken: {t}")
             log_simulation_result(simulation_num, seed_value, alpha, "Success")
             frames_grid.append(np.copy(grid_for_map))
+            if not driver_comparison:
+                visualize_simulation_1(frames_grid)
             return True
         
         if t>2000:
             print("timeout")
             log_simulation_result(simulation_num, seed_value, alpha, "Failure")
+            if not driver_comparison:
+                visualize_simulation_1(frames_grid)
             return False
         
         #Removed frames grid from return to get only True or false
