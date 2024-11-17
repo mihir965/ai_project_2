@@ -4,11 +4,11 @@ import math
 import random
 import numpy as np
 
-# def log_simulation_result(simulation_num, seed, alpha, outcome):
-#     with open("simulation_log.csv", mode="a", newline="") as file:
-#         writer = csv.writer(file)
-#         # Ensure all four values are written in the correct order
-#         writer.writerow([simulation_num, seed, f"{alpha:.2f}", outcome])
+def log_simulation_result(simulation_num, seed, alpha, outcome):
+    with open("simulation_log.csv", mode="a", newline="") as file:
+        writer = csv.writer(file)
+        # Ensure all four values are written in the correct order
+        writer.writerow([simulation_num, seed, f"{alpha:.2f}", outcome])
 
 #The rat can only occupy an open cell
 def list_possible_cells(grid, n):
@@ -37,13 +37,12 @@ def get_valid_rat_moves(grid, rat_pos):
     return possible_moves
 
 def simulate_rat_movement(grid, rat_pos):
-    """Move the rat to a random valid adjacent cell."""
     valid_moves = get_valid_rat_moves(grid, rat_pos)
     new_pos = random.choice(valid_moves)
-    if new_pos != rat_pos:  # Only update grid if the rat moves
-        grid[rat_pos[0]][rat_pos[1]] = 0  # Clear old position
-        grid[new_pos[0]][new_pos[1]] = 2  # Set new position
-    return new_pos
+    if new_pos != rat_pos:
+        grid[rat_pos[0]][rat_pos[1]] = 0
+        grid[new_pos[0]][new_pos[1]] = 2
+    return grid, new_pos
 
 def is_possible_cell(grid, i, j):
     return grid[i][j] == 0 or grid[i][j] == 2
@@ -159,7 +158,6 @@ def update_probabilities(prob_grid, prob_grid_dict, alpha, hear_prob, bot_pos, g
 
 
 def update_prob_after_movement(prob_grid, grid):
-    """Update probability grid after rat movement using environment constraints."""
     n = len(prob_grid)
     new_prob_grid = np.zeros((n, n))
     
@@ -171,34 +169,9 @@ def update_prob_after_movement(prob_grid, grid):
                 move_prob = prob_grid[i][j] / len(valid_moves)
                 for move in valid_moves:
                     new_prob_grid[move[0]][move[1]] += move_prob
-    
     return new_prob_grid
 
 # Probability update for moving rat
-def update_cells_moving_rat(prob_grid, kb, hear_prob, bot_pos, alpha, grid):
-    """Update probability grid to handle moving rat."""
-    new_prob_grid = np.copy(prob_grid)
-    total_prob_sensor = 0
-
-    # Update based on sensor reading
-    if hear_prob:
-        for cell in kb:
-            total_prob_sensor += prob_ping_j(bot_pos, cell, alpha) * new_prob_grid[cell[0]][cell[1]]
-    else:
-        for cell in kb:
-            total_prob_sensor += (1 - prob_ping_j(bot_pos, cell, alpha)) * new_prob_grid[cell[0]][cell[1]]
-
-    if total_prob_sensor != 0:
-        if hear_prob:
-            for cell in kb:
-                new_prob_grid[cell[0]][cell[1]] = (prob_ping_j(bot_pos, cell, alpha) * new_prob_grid[cell[0]][cell[1]]) / total_prob_sensor
-        else:
-            for cell in kb:
-                new_prob_grid[cell[0]][cell[1]] = ((1 - prob_ping_j(bot_pos, cell, alpha)) * new_prob_grid[cell[0]][cell[1]]) / total_prob_sensor
-
-    # Update based on rat movement
-    new_prob_grid = update_prob_after_movement(new_prob_grid, grid)
-    return new_prob_grid
 
 def weighted_center(target_quadrant, prob_grid_dict, prob_grid, grid_for_map, n):
     sum_x = 0.0
@@ -229,7 +202,7 @@ def weighted_center(target_quadrant, prob_grid_dict, prob_grid, grid_for_map, n)
 
     return target_cell   
 
-def movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t):
+def movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t, prob_grid):
     path = plan_path_bot2(grid_for_map, bot_pos, target_cell, n)
     if path and len(path)>1:
         halfway = len(path)//2
@@ -241,9 +214,17 @@ def movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t):
         # final_coordinates = path[len(path)-1]
         while True:
             t+=1
+            #The rat will also be moving with every time step
+            grid_for_map, rat_pos = simulate_rat_movement(grid_for_map, rat_pos)
+            #We need to update the probabilities as well with the movement of the rat
+            prob_grid = update_prob_after_movement(prob_grid, grid_for_map)
             # old_pos = bot_pos
             grid_for_map[bot_pos[0]][bot_pos[1]] = 0
             bot_pos = path.pop(1)
+            if grid_for_map[bot_pos[0]][bot_pos[1]] == 2:
+                print("The rat was caught!")
+                grid_for_map[bot_pos[0]][bot_pos[1]] = 3
+                break
             grid_for_map[bot_pos[0]][bot_pos[1]] = 3
             # print(f"Moving bot from {old_pos} to {bot_pos}")
             if bot_pos==halfway_coordinates:
@@ -253,11 +234,11 @@ def movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t):
         # print(f"Moving bot from {old_pos} to {bot_pos}")
         frames_grid.append(np.copy(grid_for_map))
         # print(bot_pos)
-        return bot_pos, frames_grid, t
+        return bot_pos, frames_grid, t, prob_grid, rat_pos
     else:
         print(f"The position of the rat is {rat_pos}\nThe bot is at {bot_pos}")
         print(f"No valid path found to target cell: {target_cell}")
-        return False, frames_grid, t
+        return False, frames_grid, t, prob_grid, rat_pos
 
 def refine_quadrants(parent_quadrant_name, quadrant_cells, n):
     print("Refine Quadrants ran")
@@ -305,61 +286,99 @@ def last_ditch_check_neighbours(bot_pos, grid_for_map, n, frames_grid, t):
                 return bot_pos, frames_grid
     return bot_pos, frames_grid
 
-def main_improved_with_moving_rat(grid, n, bot_pos, rat_pos, alpha, simulation_num, seed_value):
-    frames_grid = []  # Store grid frames for bot and rat visualization
-    frames_heatmap = []  # Store probability heatmap frames
+def main_improved_with_moving_rat(grid, n, bot_pos, rat_pos, alpha): # simulation_num, seed_value
+    frames_grid = []
+    frames_heatmap = []
     grid_for_map = np.copy(grid)
-    frames_grid.append(np.copy(grid_for_map))  # Initial grid
+    frames_grid.append(np.copy(grid_for_map))
     grid_for_prob = np.zeros_like(grid, dtype=float)
     init_kb = list_possible_cells(grid_for_map, n)
     prob_grid = init_prob_cells(grid_for_prob, n, init_kb)
-    frames_heatmap.append(np.copy(prob_grid))  # Initial heatmap
+    frames_heatmap.append(np.copy(prob_grid))
     quadrants = partition_grid(grid_for_map, n)
     t = 0
-
+    current_quadrant = None
     while True:
         old_rat_pos = rat_pos
-        rat_pos = simulate_rat_movement(grid, rat_pos)
+        grid_for_map, rat_pos = simulate_rat_movement(grid_for_map, rat_pos)
         print(f"Step {t}: Rat moved from {old_rat_pos} to {rat_pos}")
 
+        frames_grid.append(np.copy(grid_for_map))
+
+        # Update probabilities based on sensor and rat movement
         hear_prob = prob_ping_rat(bot_pos, rat_pos, alpha)
-        prob_grid = update_cells_moving_rat(prob_grid, init_kb, hear_prob, bot_pos, alpha, grid)
-        frames_heatmap.append(np.copy(prob_grid))
+        quadrant_probabilities, prob_grid = update_probabilities(
+            prob_grid, quadrants, alpha, hear_prob, bot_pos, grid
+        )
 
-        max_prob = np.max(prob_grid)
-        result = np.where(prob_grid == max_prob)
-        max_cells = list(zip(result[0], result[1]))
-        max_cells = [(int(row), int(col)) for row, col in max_cells]
-        if not max_cells:
-            print("No cells with probabilities found!")
-            return False, frames_grid, frames_heatmap
-        target_cell = max_cells[0]
-
-        # Move bot toward the target cell
-        if bot_pos == target_cell:
-            print("Bot already at the target cell.")
+        # Determine target quadrant and weighted center
+        target_quadrant = max(quadrant_probabilities, key=quadrant_probabilities.get)
+        print(f"The target quadrant is: {target_quadrant}")
+        target_cell = weighted_center(target_quadrant, quadrants, prob_grid, grid_for_map, n)
+        print(f"Weighted center of {target_quadrant}: {target_cell}")
+        if target_cell and 0 <= target_cell[0] < n and 0 <= target_cell[1] < n and grid_for_map[target_cell[0]][target_cell[1]] != -1:
+            if current_quadrant == target_quadrant:
+                print("Consistency within the same quadrant.")
+                if bot_pos == target_cell:
+                    t+=1
+                    bot_pos, frames_grid = last_ditch_check_neighbours(bot_pos, grid_for_map, n, frames_grid, t)
+                    if grid_for_map[bot_pos[0]][bot_pos[1]]==2:
+                        print("The rat was caught!!")
+                        print(f"Steps taken: {t}")
+                        # log_simulation_result(simulation_num, seed_value, alpha, "Success")
+                        frames_grid.append(np.copy(grid_for_map))
+                        return True
+                    print("Bot already at the target cell.")
+                    if t>2000:
+                        print("timeout")
+                        # log_simulation_result(simulation_num, seed_value, alpha, "Failure")
+                        return False
+                    else:
+                        continue
+                # Move the bot to the target cell
+                bot_pos, frames_grid, t, prob_grid, rat_pos = movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t, prob_grid)
+                # Refine the target quadrant
+                refined_quadrants = refine_quadrants(target_quadrant, quadrants[target_quadrant], n)
+                if refined_quadrants:
+                    del quadrants[target_quadrant]
+                    quadrants.update(refined_quadrants)
+                    print(f"Refined {target_quadrant} into {list(refined_quadrants.keys())}")
+            else:
+                print("Switching to a new quadrant.")
+                if bot_pos == target_cell:
+                    t+=1
+                    bot_pos, frames_grid = last_ditch_check_neighbours(bot_pos, grid_for_map, n, frames_grid, t)
+                    if grid_for_map[bot_pos[0]][bot_pos[1]]==2:
+                        print("The rat was caught!!")
+                        print(f"Steps taken: {t}")
+                        # log_simulation_result(simulation_num, seed_value, alpha, "Success")
+                        frames_grid.append(np.copy(grid_for_map))
+                        return True
+                    print("Bot already at the target cell.")
+                    if t>2000:
+                        print("timeout")
+                        # log_simulation_result(simulation_num, seed_value, alpha, "Failure")
+                        return False
+                    else:
+                        continue
+                bot_pos, frames_grid, t, prob_grid, rat_pos = movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t, prob_grid)
+                if bot_pos is False:
+                    print("Bot movement failed.")
+                    break
+                current_quadrant = target_quadrant
         else:
-            path = plan_path_bot2(grid, bot_pos, target_cell, n)
-            if not path or len(path) <= 1:
-                print("No valid path to target cell.")
-                return False, frames_grid, frames_heatmap
-            grid[bot_pos[0]][bot_pos[1]] = 0  # Clear old bot position
-            bot_pos = path[1]  # Take the first step
-            grid[bot_pos[0]][bot_pos[1]] = 3  # Update bot position
-            frames_grid.append(np.copy(grid))  # Append updated grid
-
-        print(f"Step {t}: Bot moved to {bot_pos}")
+            print(f"Invalid target cell selected: {target_cell}")
+            print(grid_for_map[target_cell[0]][target_cell[1]])
 
         # Check if bot catches the rat
         if bot_pos == rat_pos:
             print(f"Bot caught the rat at {bot_pos} in {t} steps!")
-            frames_grid.append(np.copy(grid))  # Final grid
+            # log_simulation_result(simulation_num, seed_value, alpha, "Success")
+            frames_grid.append(np.copy(grid_for_map)) 
             return True, frames_grid
 
         # Timeout condition
         if t > 1000:
             print("Timeout: Bot took too long.")
-            return False, frames_grid
-
-        t += 1
-
+            # log_simulation_result(simulation_num, seed_value, alpha, "Failure")
+            return False, frames_grid  

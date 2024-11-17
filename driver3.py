@@ -51,8 +51,7 @@ def run_single_comparison(alpha, simulation_num):
     # Log the results
     with open("comparison_log.csv", mode="a", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow([simulation_num, seed_value, f"{alpha:.2f}", "Success" if baseline_caught else "Failure", 
-                         "Success" if improved_caught else "Failure"])
+        writer.writerow([simulation_num, seed_value, f"{alpha:.2f}", "Success" if baseline_caught else "Failure", "Success" if improved_caught else "Failure"])
     
     return baseline_caught, improved_caught
 

@@ -41,4 +41,7 @@ np.random.seed(seed_value)
 # if rat_caught:
 #     visualize_simulation_1(frames)
 
-main_improved(grid, n, bot_pos, rat_pos, alpha)
+# main_improved(grid, n, bot_pos, rat_pos, alpha)
+rat_caught, frames = main_improved_with_moving_rat(grid, n, bot_pos, rat_pos, alpha)
+if rat_caught:
+    visualize_simulation_1(frames)
