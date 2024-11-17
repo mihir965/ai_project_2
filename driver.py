@@ -38,7 +38,7 @@ bot_pos = main_function(grid, n, bot_pos)
 
 
 #Baseline bot Function - main_function_catching - Run this for stationary rat, baseline bot
-# rat_caught= main_function_catching(grid, n, bot_pos, rat_pos, alpha, 5, seed_value, False)
+# rat_caught = main_function_catching(grid, n, bot_pos, rat_pos, alpha, 5, seed_value, False)
 
 
 #Baseline bot Function - main_function_catching_moving_rat - Run this for moving rat with the baseline logic

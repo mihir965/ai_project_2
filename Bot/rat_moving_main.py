@@ -180,7 +180,7 @@ def main_function_catching_moving_rat(grid, n, bot_pos, rat_pos, alpha, simulati
                 visualize_simulation_1(frames_grid)
             return True
         
-        if t > 5000:
+        if t > 2000:
             print(f"The bot is stuck or taking too long:")
             log_simulation_result(simulation_num, seed_value, alpha, "Failure")
             if not driver_comparison:

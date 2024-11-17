@@ -390,7 +390,7 @@ def main_improved_with_moving_rat(grid, n, bot_pos, rat_pos, alpha, simulation_n
             return True
 
         # Timeout condition
-        if t > 1000:
+        if t > 2000:
             print("Timeout: Bot took too long.")
             log_simulation_result(simulation_num, seed_value, alpha, "Failure")
             if not driver_comparison:

@@ -14,7 +14,7 @@ n = 30
 def initialize_comparison_log():
     with open("comparison_log.csv", mode="w", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow(["Simulation Number", "Seed Value", "Alpha", "Baseline Outcome", "Improved Outcome"])
+        writer.writerow(["Simulation Number", "Seed Value", "Alpha", "Baseline Outcome", "Improved Outcome", "Baseline Move Outcome", "Improved Move Outcome"])
 
 def run_single_comparison(alpha, simulation_num):
     # Generate a random seed for this simulation
