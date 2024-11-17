@@ -378,7 +378,7 @@ def main_improved_with_moving_rat(grid, n, bot_pos, rat_pos, alpha, simulation_n
                 current_quadrant = target_quadrant
         else:
             print(f"Invalid target cell selected: {target_cell}")
-            print(grid_for_map[target_cell[0]][target_cell[1]])
+            # print(grid_for_map[target_cell[0]][target_cell[1]])
 
         # Check if bot catches the rat
         if bot_pos == rat_pos:
