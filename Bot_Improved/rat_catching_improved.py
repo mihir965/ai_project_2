@@ -159,7 +159,7 @@ def weighted_center(target_quadrant, prob_grid_dict, prob_grid, grid_for_map, n)
     return target_cell   
 
 #We move halfway first, then if consistency is there, we move all the way. t is updated here since we are not alternating between movement and sensing.
-def movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t):
+def movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t, moving):
     path = plan_path_bot2(grid_for_map, bot_pos, target_cell, n)
     if path and len(path)>1:
         halfway = len(path)//2
@@ -174,6 +174,7 @@ def movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t):
             # old_pos = bot_pos
             grid_for_map[bot_pos[0]][bot_pos[1]] = 0
             bot_pos = path.pop(1)
+            moving+=1
             if grid_for_map[bot_pos[0]][bot_pos[1]] == 2:
                 print("The rat was caught!")
                 grid_for_map[bot_pos[0]][bot_pos[1]] = 3
@@ -187,11 +188,11 @@ def movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t):
         # print(f"Moving bot from {old_pos} to {bot_pos}")
         frames_grid.append(np.copy(grid_for_map))
         # print(bot_pos)
-        return bot_pos, frames_grid, t
+        return bot_pos, frames_grid, t, moving
     else:
         print(f"The position of the rat is {rat_pos}\nThe bot is at {bot_pos}")
         print(f"No valid path found to target cell: {target_cell}")
-        return False, frames_grid, t
+        return False, frames_grid, t, moving
 
 #Once a quadrant has been selected as consistent, we refine it to narrow down the search and repeat the entire process.
 def refine_quadrants(parent_quadrant_name, quadrant_cells, n):
@@ -227,19 +228,20 @@ def refine_quadrants(parent_quadrant_name, quadrant_cells, n):
     return refined_quadrants
 
 #Sometimes, the bot would be stuck on the target cell, while being very close to the rat, This is a last ditch attempt to get the rat
-def last_ditch_check_neighbours(bot_pos, grid_for_map, n, frames_grid, t):
+def last_ditch_check_neighbours(bot_pos, grid_for_map, n, frames_grid, t, moving):
     cardinality = [[1,0],[-1,0],[0,1],[0,-1]]
     for i, j in cardinality:
         new_i, new_j = bot_pos[0]+i, bot_pos[1]+j
         if is_valid(new_i, new_j, n):
             t+=1
+            moving+=1
             bot_pos = (new_i, new_j)
             if grid_for_map[bot_pos[0]][[bot_pos[1]]]==2:
                 grid_for_map[bot_pos[0]][bot_pos[1]] = 3
                 print("The rat was caught in a last ditch attempt!")
                 frames_grid.append(np.copy(grid_for_map))
-                return bot_pos, frames_grid
-    return bot_pos, frames_grid
+                return bot_pos, frames_grid, t, moving
+    return bot_pos, frames_grid, t, moving
 
 def main_improved(grid, n, bot_pos, rat_pos, alpha, simulation_num, seed_value, driver_comparison):
     frames_grid = []
@@ -251,12 +253,15 @@ def main_improved(grid, n, bot_pos, rat_pos, alpha, simulation_num, seed_value, 
     quadrants = partition_grid(grid_for_map, n)
     t=0
     current_quadrant = None
+    data_log = []
+    sensing = 0
+    moving = 0
+    waiting = 0
     while True:
         hear_prob_rat = prob_ping_rat(bot_pos, rat_pos, alpha)
         print(hear_prob_rat)
+        sensing+=1
         quadrant_probabilities, prob_grid = update_probabilities(prob_grid, quadrants, alpha, hear_prob_rat, bot_pos)
-        # for q, cell in quadrant_probabilities.items():
-        #     print(f"{q}: {cell}")
         
         target_quadrant = max(quadrant_probabilities, key=quadrant_probabilities.get)
         print(f"The target quadrant is:\n {target_quadrant}")
@@ -266,8 +271,8 @@ def main_improved(grid, n, bot_pos, rat_pos, alpha, simulation_num, seed_value, 
             if target_quadrant==current_quadrant:
                 print("Consistency")
                 if bot_pos==target_cell:
-                    t+=1
-                    bot_pos, frames_grid = last_ditch_check_neighbours(bot_pos, grid_for_map, n, frames_grid, t)
+                    # t+=1
+                    bot_pos, frames_grid, t, moving = last_ditch_check_neighbours(bot_pos, grid_for_map, n, frames_grid, t, moving)
                     if grid_for_map[bot_pos[0]][bot_pos[1]]==2:
                         print("The rat was caught!!")
                         print(f"Steps taken: {t}")
@@ -285,7 +290,7 @@ def main_improved(grid, n, bot_pos, rat_pos, alpha, simulation_num, seed_value, 
                         return False
                     else:
                         continue
-                bot_pos, frames_grid, t = movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t)
+                bot_pos, frames_grid, t, moving = movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t, moving)
                 refined_quadrants = refine_quadrants(target_quadrant, quadrants[target_quadrant], n)
                 if refined_quadrants:
                     del quadrants[target_quadrant]
@@ -296,8 +301,8 @@ def main_improved(grid, n, bot_pos, rat_pos, alpha, simulation_num, seed_value, 
             else:
                 print("Else ran")
                 if bot_pos==target_cell:
-                    t+=1
-                    bot_pos, frames_grid = last_ditch_check_neighbours(bot_pos, grid_for_map, n, frames_grid, t)
+                    # t+=1
+                    bot_pos, frames_grid, t, moving = last_ditch_check_neighbours(bot_pos, grid_for_map, n, frames_grid, t, moving)
                     if grid_for_map[bot_pos[0]][bot_pos[1]]==2:
                         print("The rat was caught!!")
                         print(f"Steps taken: {t}")
@@ -315,18 +320,22 @@ def main_improved(grid, n, bot_pos, rat_pos, alpha, simulation_num, seed_value, 
                         return False
                     else:
                         continue
-                bot_pos, frames_grid, t= movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t)
+                bot_pos, frames_grid, t, moving = movement(grid_for_map, target_cell, bot_pos, n, frames_grid, rat_pos, t, moving)
                 if bot_pos==False:
                     break
                 current_quadrant = target_quadrant
         else:
             print(f"Invalid target cell selected: {target_cell}")
             t+=1
+            waiting+=1
             # print(grid_for_map[target_cell[0]][target_cell[1]])
 
         if bot_pos==rat_pos:
             print("Bot has caught the rat!")
             print(f"Steps taken: {t}")
+            print(f"The moving steps were: {moving}")
+            print(f"The sensing steps were: {sensing}")
+            print(f"The waiting steps were: {waiting}")
             log_simulation_result(simulation_num, seed_value, alpha, "Success")
             frames_grid.append(np.copy(grid_for_map))
             if not driver_comparison:

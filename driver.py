@@ -18,6 +18,7 @@ seed_value = random.randrange(1, 1000)
 # seed_value = 259
 # seed_value = 565
 # seed_value = 304
+# seed_value = 457
 print(seed_value)
 random.seed(seed_value)
 np.random.seed(seed_value)
@@ -45,7 +46,7 @@ bot_pos = main_function(grid, n, bot_pos)
 # rat_caught = main_function_catching_moving_rat(grid, n, bot_pos, rat_pos, alpha, 5, seed_value, False)
 
 #Improved bot Function - main_improved - Run this for stationary rat, Modified bot
-# rat_caught = main_improved(grid, n, bot_pos, rat_pos, alpha, 5, seed_value, False)
+rat_caught = main_improved(grid, n, bot_pos, rat_pos, alpha, 5, seed_value, False)
 
 #Improved bot Function - main_improved_with_moving_rat - Run this for moving rat with modified logic
-rat_caught = main_improved_with_moving_rat(grid, n, bot_pos, rat_pos, alpha, 5, seed_value, False)
+# rat_caught = main_improved_with_moving_rat(grid, n, bot_pos, rat_pos, alpha, 5, seed_value, False)
